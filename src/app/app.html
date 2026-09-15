@@ -3,14 +3,7 @@
 @if (tasks.length > 0) {
 <ul>
   @for (task of tasks; track task.id) {
-  <li [class.done]="task.done">
-    {{ task.title }}
-    @switch (task.priority) {
-    @case ('high') { <span class="tag tag-high">Alta</span> }
-    @case ('medium') { <span class="tag tag-medium">Media</span> }
-    @default { <span class="tag tag-low">Baja</span> }
-    }
-  </li>
+  <app-task-item [task]="task" (toggle)="onToggle($event)" (remove)="onRemove($event)" />
   } @empty {
   <li>No hay tareas todavía.</li>
   }
