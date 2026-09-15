@@ -1,0 +1,8 @@
+li {
+  color: darkorange;
+  font-weight: 500;
+}
+
+li.done {
+  color: seagreen;
+}

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Task } from './task';
 import { TaskItem } from './task-item/task-item';
@@ -31,7 +31,18 @@ export class App {
   }
 
   onRemove(id: number) {
-    // this.tasks = this.tasks.filter(t => t.id !== id);
-  }
-}
+    const before = this.tasks().find(t => t.id === id);
+    this.tasks.update(actual =>
+      /* ¿qué condición hace que TODAS las tareas queden, excepto la del id que llega? */
+      actual.filter(
+        t => t.id !== id
+      )
+    );
 
+    const after = this.tasks().find(t => t.id === id);
+
+    console.log('Tarea antes:', before);
+    console.log('Tarea después:', after);
+  }
+  pendingCount = computed(() => this.tasks().filter(t => !t.done).length);
+}
