@@ -1,0 +1,20 @@
+<router-outlet />
+
+@if (tasks.length > 0) {
+<ul>
+  @for (task of tasks; track task.id) {
+  <li [class.done]="task.done">
+    {{ task.title }}
+    @switch (task.priority) {
+    @case ('high') { <span class="tag tag-high">Alta</span> }
+    @case ('medium') { <span class="tag tag-medium">Media</span> }
+    @default { <span class="tag tag-low">Baja</span> }
+    }
+  </li>
+  } @empty {
+  <li>No hay tareas todavía.</li>
+  }
+</ul>
+} @else {
+<p>Todavía no cargaste ninguna tarea.</p>
+}
