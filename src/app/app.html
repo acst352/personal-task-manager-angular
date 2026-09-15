@@ -1,8 +1,8 @@
 <router-outlet />
 
-@if (tasks.length > 0) {
+@if (tasks().length > 0) {
 <ul>
-  @for (task of tasks; track task.id) {
+  @for (task of tasks(); track task.id) {
   <app-task-item [task]="task" (toggle)="onToggle($event)" (remove)="onRemove($event)" />
   } @empty {
   <li>No hay tareas todavía.</li>
