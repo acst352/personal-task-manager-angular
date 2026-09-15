@@ -18,10 +18,10 @@ export class App {
   ];
 
   onToggle(id: number) {
-
+    console.log("Has Toggleado")
   }
 
   onRemove(id: number) {
-
+    console.log("Has Removido")
   }
 }

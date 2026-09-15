@@ -5,6 +5,6 @@
   @case ('medium') { <span class="tag tag-medium">Media</span> }
   @default { <span class="tag tag-low">Baja</span> }
   }
-  <button (click)="toggle.emit(task().id)">✓</button>
-  <button (click)="remove.emit(task().id)">✕</button>
+  <button style="margin: 8px;" (click)="toggle.emit(task().id)">✓</button>
+  <button style="margin: 8px;" (click)="remove.emit(task().id)">✕</button>
 </li>
