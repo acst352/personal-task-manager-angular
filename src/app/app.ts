@@ -18,14 +18,15 @@ export class App {
   ])
 
   onToggle(id: number) {
-    const before = this.tasks().find(t => t.id === id);
-    console.log('Tarea antes:', before);
+    const before = this.tasks().find(t => t.id === id)
 
-    this.tasks.update(tasks =>
-      tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t))
+    this.tasks.update(actual =>
+      actual.map(t => t.id === id ? { ...t, done: !t.done } : t)
     );
 
     const after = this.tasks().find(t => t.id === id);
+
+    console.log('Tarea antes:', before);
     console.log('Tarea después:', after);
   }
 
