@@ -4,6 +4,16 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-09-17
+
+### Fixed
+- **Console error regression**: `auth.interceptor.ts` was sending no Authorization header when no user token was present. This caused `POST /api/auth/users` (signup) to fail with 401 because InsForge requires Bearer auth even for anonymous application calls (uses the anon key as application identification). Restored the `anonKey` fallback so the interceptor always sends a Bearer header.
+
+### Verified
+- 0 console errors on app load
+- 0 failed network requests on signup
+- 39/39 unit tests still green
+
 ## [1.0.0] - 2026-09-17
 
 ### Changed
