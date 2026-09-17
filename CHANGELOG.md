@@ -4,6 +4,15 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-17
+
+### Added
+- `docs/SPEC.auth.md`: 15 cases Given/When/Then for auth flows (signup, verify, login, logout, reload, switch user, errors, edge cases).
+- `docs/SPEC.tasks.md`: 11 cases for CRUD including TASK-N1/N2 (negative tests that catch RLS bypass bugs).
+- `docs/SPEC.login-quality.md`: 11 criteria for professional-grade login (validation, accessibility, error mapping, robustness).
+
+Each case marked with status ✅/⚠️/❌ against current implementation. These docs become the contract that Phase D tests assert against.
+
 ## [0.3.1] - 2026-09-17
 
 ### Fixed
