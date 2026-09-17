@@ -1,16 +1,40 @@
 <router-outlet />
-<p>
-  {{pendingCount()}} tareas pendientes
-</p>
 
-@if (tasks().length > 0) {
-<ul>
-  @for (task of tasks(); track task.id) {
-  <app-task-item [task]="task" (toggle)="onToggle($event)" (remove)="onRemove($event)" />
-  } @empty {
-  <li>No hay tareas todavía.</li>
-  }
-</ul>
+<header>
+  <h1>{{ pendingCount() }} tareas pendientes</h1>
+  <button type="button" (click)="onStartCreate()">+ Nueva tarea</button>
+</header>
+
+@if (error(); as err) {
+  <p class="error">Error: {{ getErrorMessage(err) }}</p>
+}
+
+@if (editing(); as task) {
+  <app-task-form
+    [task]="task"
+    (save)="onSave($event)"
+    (cancel)="onCancelEdit()"
+  />
+} @else if (isCreating()) {
+  <app-task-form
+    (save)="onSave($event)"
+    (cancel)="onCancelEdit()"
+  />
+}
+
+@if (isLoading()) {
+  <p>Cargando tareas…</p>
+} @else if (tasks().length > 0) {
+  <ul>
+    @for (task of tasks(); track task.id) {
+      <app-task-item
+        [task]="task"
+        (toggle)="onToggle($event)"
+        (remove)="onRemove($event)"
+        (edit)="onEdit($event)"
+      />
+    }
+  </ul>
 } @else {
-<p>Todavía no cargaste ninguna tarea.</p>
+  <p>No hay tareas todavía. Crea la primera con el botón de arriba.</p>
 }

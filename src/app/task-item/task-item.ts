@@ -9,6 +9,7 @@ import { Task } from '../task';
 })
 export class TaskItem {
   task = input.required<Task>();
-  toggle = output<number>();
-  remove = output<number>();
+  toggle = output<string>();
+  remove = output<string>();
+  edit = output<Task>();
 }

@@ -1,10 +1,11 @@
 <li [class.done]="task().done">
-  {{ task().title }}
+  <span class="title">{{ task().title }}</span>
   @switch (task().priority) {
-  @case ('high') { <span class="tag tag-high">Alta</span> }
-  @case ('medium') { <span class="tag tag-medium">Media</span> }
-  @default { <span class="tag tag-low">Baja</span> }
+    @case ('high') { <span class="tag tag-high">Alta</span> }
+    @case ('medium') { <span class="tag tag-medium">Media</span> }
+    @default { <span class="tag tag-low">Baja</span> }
   }
-  <button style="margin: 8px;" (click)="toggle.emit(task().id)">✓</button>
-  <button style="margin: 8px;" (click)="remove.emit(task().id)">✕</button>
+  <button type="button" (click)="toggle.emit(task().id)">✓</button>
+  <button type="button" (click)="edit.emit(task())">Editar</button>
+  <button type="button" (click)="remove.emit(task().id)">✕</button>
 </li>

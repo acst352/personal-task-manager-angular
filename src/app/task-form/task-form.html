@@ -1,0 +1,33 @@
+<form (submit)="onSubmit($event)" class="task-form">
+  <h3>{{ isEdit() ? 'Editar tarea' : 'Nueva tarea' }}</h3>
+
+  <label>
+    Título
+    <input
+      type="text"
+      name="title"
+      [ngModel]="title()"
+      (ngModelChange)="title.set($event)"
+      required
+      autofocus
+    />
+  </label>
+
+  <label>
+    Prioridad
+    <select
+      name="priority"
+      [ngModel]="priority()"
+      (ngModelChange)="priority.set($event)"
+    >
+      <option value="low">Baja</option>
+      <option value="medium">Media</option>
+      <option value="high">Alta</option>
+    </select>
+  </label>
+
+  <div class="actions">
+    <button type="submit" [disabled]="!title().trim()">Guardar</button>
+    <button type="button" (click)="cancel.emit()">Cancelar</button>
+  </div>
+</form>
