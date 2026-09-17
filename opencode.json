@@ -3,6 +3,7 @@
   "mcp": {
     "insforge": {
       "type": "local",
+      "enabled": true,
       "command": [
         "npx",
         "-y",
