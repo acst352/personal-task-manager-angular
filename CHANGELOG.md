@@ -4,6 +4,31 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-17
+
+### Added
+- **Unit tests (vitest)**: 28 passing across `auth.service.spec.ts` (16) and `tasks.spec.ts` (10) + 2 smoke tests.
+- **E2E tests (playwright)**: 11/13 passing across `auth.spec.ts` (5), `tasks.spec.ts` (4/6), `auth-switch.spec.ts` (1, bug #3 regression), `auth-boot-validation.spec.ts` (1).
+- `e2e/fixtures.ts`: shared helpers (signIn, createTaskViaUI, cleanupTasks, createTestUser, etc.).
+- `src/test-helpers/insforge-admin.ts`: admin API helpers for test setup/teardown.
+- `src/test-setup.ts`: jsdom + localStorage mock + Angular TestBed + beforeEach reset.
+
+### Bug #3 reactivity fix
+- `TasksService.tasks` now uses an explicit `effect()` that watches `auth.currentUser()` and reloads on change. Replaces the earlier (unreliable) header-dependency approach.
+
+### Tests added (from Phase D scope)
+- ICY-62 `auth.service.spec.ts` (12 cases, expanded to 16)
+- ICY-63 `tasks.service.spec.ts` (10 cases) — includes bug #1 and #2 regressions
+- ICY-64 `login.spec.ts` (deferred to Phase F or E)
+- ICY-65 `e2e/auth.spec.ts` (5 flows)
+- ICY-66 `e2e/tasks.spec.ts` (6 flows, including RLS isolation)
+- ICY-67 `e2e/login-quality.spec.ts` (deferred — fewer features implemented)
+- ICY-76 `e2e/auth-switch.spec.ts` (1 flow, bug #3 regression)
+- ICY-77 `e2e/auth-boot-validation.spec.ts` (1 flow, stale token rejected)
+
+### Known flakiness
+- `TASK-E2E-4` and `auth-switch.spec.ts` pass in isolation but are flaky in full suite due to test pollution between tests sharing the same user/BD. Mitigation: move `cleanupTasks` to `beforeEach`.
+
 ## [0.5.0] - 2026-09-17
 
 ### Added
