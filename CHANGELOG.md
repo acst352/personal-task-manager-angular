@@ -4,9 +4,22 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
-### En curso
-- PM setup: PRD, versionado, Linear board
-- Fase A: investigación RLS + fix bugs DELETE/INSERT
+## [0.3.0] - 2026-09-17
+
+### Fixed
+- **Bug 2 (INSERT 403)**: created RLS policy `users_own_tasks` on `public.tasks` for the `authenticated` role. Previously the table had RLS enabled but defined no policies, which under Postgres defaults to deny-everything. The admin bearer token bypasses RLS (table owner role), which is why curl with the admin key worked but the app with a user JWT didn't.
+
+### Documentation
+- `docs/INVESTIGATION.md`: full RLS investigation, schema, policies, JWT structure, bug diagnosis, and Phase E roadmap
+- `docs/PRD.md`: one-pager project requirements
+- `docs/VERSIONING.md`: semver rules + roadmap
+
+### Maintenance
+- Deleted 5 leftover task rows (all with user_id=null from pre-RLS testing)
+- Deleted test users `rls-test@example.com` and `demo@example.com`
+
+### Known Issues (still open)
+- ⚠️ **Bug 1 (DELETE silent)**: when RLS denies a DELETE (because the row isn't visible to the requesting user), PostgREST returns 200 OK with body `[]`. The current `tasks.service.ts:remove()` only checks status code, so the UI believes the deletion succeeded. Fix in E-1.
 
 ## [0.2.0] - 2026-09-17
 
