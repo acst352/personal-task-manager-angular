@@ -6,12 +6,12 @@
       "command": [
         "npx",
         "-y",
-        "@insforge/mcp@latest"
-      ],
-      "environment": {
-        "API_KEY": "ik_b91c9f0f0c6e8824e0b7242d56609ad1",
-        "API_BASE_URL": "https://re3mwsvq.us-east.insforge.app"
-      }
+        "@insforge/mcp@latest",
+        "--api_key",
+        "ik_b91c9f0f0c6e8824e0b7242d56609ad1",
+        "--api_base_url",
+        "https://re3mwsvq.us-east.insforge.app"
+      ]
     }
   }
 }
