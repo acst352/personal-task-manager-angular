@@ -1,55 +1,118 @@
 <form (submit)="onSubmit($event)" class="login-form">
-  <h2>{{ mode() === 'signin' ? 'Iniciar sesión' : 'Crear cuenta' }}</h2>
-
-  @if (mode() === 'signup') {
-    <label>
-      Nombre
-      <input
-        type="text"
-        name="name"
-        [ngModel]="name()"
-        (ngModelChange)="name.set($event)"
-        autocomplete="name"
-      />
-    </label>
+  @switch (mode()) {
+    @case ('signin') {
+      <h2>Iniciar sesión</h2>
+      <label>
+        Email
+        <input
+          type="email"
+          name="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          required
+          autocomplete="email"
+          autofocus
+        />
+      </label>
+      <label>
+        Contraseña
+        <input
+          type="password"
+          name="password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          required
+          autocomplete="current-password"
+        />
+      </label>
+    }
+    @case ('signup') {
+      <h2>Crear cuenta</h2>
+      <label>
+        Nombre
+        <input
+          type="text"
+          name="name"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          autocomplete="name"
+        />
+      </label>
+      <label>
+        Email
+        <input
+          type="email"
+          name="email"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          required
+          autocomplete="email"
+        />
+      </label>
+      <label>
+        Contraseña
+        <input
+          type="password"
+          name="password"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          required
+          minlength="6"
+          autocomplete="new-password"
+        />
+      </label>
+    }
+    @case ('verify') {
+      <h2>Verifica tu email</h2>
+      <p class="info">
+        Te enviamos un código a <strong>{{ email() }}</strong>.
+        Introdúcelo abajo para activar tu cuenta.
+      </p>
+      <label>
+        Código de verificación
+        <input
+          type="text"
+          name="otp"
+          [ngModel]="otp()"
+          (ngModelChange)="otp.set($event)"
+          required
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          autofocus
+        />
+      </label>
+    }
   }
-
-  <label>
-    Email
-    <input
-      type="email"
-      name="email"
-      [ngModel]="email()"
-      (ngModelChange)="email.set($event)"
-      required
-      autocomplete="email"
-      autofocus
-    />
-  </label>
-
-  <label>
-    Contraseña
-    <input
-      type="password"
-      name="password"
-      [ngModel]="password()"
-      (ngModelChange)="password.set($event)"
-      required
-      autocomplete="current-password"
-      minlength="6"
-    />
-  </label>
 
   @if (error(); as err) {
     <p class="error">{{ err }}</p>
   }
+  @if (info(); as msg) {
+    <p class="info success">{{ msg }}</p>
+  }
 
   <div class="actions">
     <button type="submit" [disabled]="submitting()">
-      {{ mode() === 'signin' ? 'Entrar' : 'Registrarme' }}
+      @switch (mode()) {
+        @case ('signin') { Entrar }
+        @case ('signup') { Registrarme }
+        @case ('verify') { Verificar }
+      }
     </button>
-    <button type="button" (click)="toggleMode()">
-      {{ mode() === 'signin' ? 'Crear cuenta' : 'Ya tengo cuenta' }}
-    </button>
+
+    @switch (mode()) {
+      @case ('signin') {
+        <button type="button" (click)="toggleMode()">Crear cuenta</button>
+      }
+      @case ('signup') {
+        <button type="button" (click)="toggleMode()">Ya tengo cuenta</button>
+      }
+      @case ('verify') {
+        <button type="button" (click)="onResendOtp()" [disabled]="submitting()">
+          Reenviar código
+        </button>
+        <button type="button" (click)="onBackToSignIn()">Atrás</button>
+      }
+    }
   </div>
 </form>

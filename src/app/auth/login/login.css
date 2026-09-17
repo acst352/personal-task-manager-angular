@@ -23,7 +23,17 @@
   font-size: 1rem;
 }
 
-.login-form .error {
+.login-form p.info {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 0;
+}
+
+.login-form p.info.success {
+  color: seagreen;
+}
+
+.login-form p.error {
   color: crimson;
   font-size: 0.85rem;
   margin: 0;
@@ -50,4 +60,9 @@
 
 .login-form button[type='button'] {
   background: #eee;
+}
+
+.login-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

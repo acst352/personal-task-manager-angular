@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
@@ -20,14 +20,20 @@ interface SignUpRequest {
   name?: string;
 }
 
+interface VerifyRequest {
+  email: string;
+  otp: string;
+}
+
 interface AuthResponse {
-  accessToken?: string;
+  accessToken?: string | null;
   refreshToken?: string;
   user?: {
     id: string;
     email: string;
     name?: string;
   };
+  requireEmailVerification?: boolean;
 }
 
 const TOKEN_KEY = 'insforge_access_token';
@@ -40,9 +46,11 @@ export class AuthService {
   private http = inject(HttpClient);
 
   private readonly _user = signal<AuthUser | null>(this.readUser());
+  private readonly _pendingVerificationEmail = signal<string | null>(null);
 
   readonly currentUser = this._user.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
+  readonly pendingVerificationEmail = this._pendingVerificationEmail.asReadonly();
 
   async signIn(email: string, password: string): Promise<void> {
     const body: SignInRequest = { email, password };
@@ -66,12 +74,37 @@ export class AuthService {
         body,
       ),
     );
-    if (!res.accessToken || !res.user) {
+    if (res.requireEmailVerification || !res.accessToken || !res.user) {
+      this._pendingVerificationEmail.set(email);
       throw new Error(
-        'Registro OK pero requiere verificación por email. Revisa tu bandeja.',
+        'Te enviamos un código de verificación a tu email. Introdúcelo abajo para continuar.',
       );
     }
     this.persist(res.accessToken, res.user);
+  }
+
+  async verifyEmail(email: string, otp: string): Promise<void> {
+    const body: VerifyRequest = { email, otp };
+    const res = await firstValueFrom(
+      this.http.post<AuthResponse>(
+        `${environment.insforge.baseUrl}/api/auth/email/verify`,
+        body,
+      ),
+    );
+    if (!res.accessToken || !res.user) {
+      throw new Error('Código inválido o expirado');
+    }
+    this._pendingVerificationEmail.set(null);
+    this.persist(res.accessToken, res.user);
+  }
+
+  async resendVerification(email: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(
+        `${environment.insforge.baseUrl}/api/auth/email/send-verification`,
+        { email },
+      ),
+    );
   }
 
   signOut(): void {
