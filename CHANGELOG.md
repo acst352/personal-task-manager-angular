@@ -4,6 +4,25 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-17
+
+### Fixed
+- **Bug #1 (DELETE silent)**: `tasks.service.ts:remove()` now uses `Prefer: return=representation` and throws when the response array is empty (RLS denied the delete, server returns 200 with `[]`). `App.onRemove()` shows a `confirm()` dialog and surfaces the error via `actionError` signal.
+- **Bug #3 (architectural — stale state on user switch)**: `TasksService.tasks` now reads `auth.currentUser()` inside the `httpResource()` request function, making it reactive. When the user logs in/out, the resource refetches automatically with the new token. Previously the URL was constant and stale data from a previous user lingered in `tasks.value()` until the next create/update/delete triggered a reload.
+
+### Added
+- `AuthService.validateStoredSession()`: bootstrap check that calls `/api/auth/sessions/current` with the stored token. If 401/403, clears the session. Wired via `provideAppInitializer()` in `app.config.ts` so it runs before the first render — dead tokens no longer let the UI show a logged-in state.
+- `task.ts`: `NewTask` and `TaskUpdate` type aliases (already existed, formalized).
+- `App.actionError` signal: separate from the resource-level `error` so CRUD failures show inline without losing the resource error.
+
+### Changed
+- `tasks.service.ts:create()` now requires a non-null `userId` parameter (caller must be authenticated). Throws with a clear message if RLS denies.
+- `tasks.service.ts:update()` now throws if the patched row is not returned (RLS denied or row doesn't exist).
+
+### Tests added to Phase D
+- ICY-76 `e2e/auth-switch.spec.ts`: user-switch mid-session shows new user's tasks
+- ICY-77 `e2e/auth-boot-validation.spec.ts`: stale token rejected at boot
+
 ## [0.3.0] - 2026-09-17
 
 ### Fixed
