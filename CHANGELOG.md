@@ -4,6 +4,25 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-17
+
+### Added
+- `vitest.config.ts`: configuration with `@analogjs/vitest-angular` plugin, jsdom environment, setup file
+- `src/test-setup.ts`: Angular TestBed init, localStorage mock, `beforeEach` reset hook
+- `src/test-setup.spec.ts`: smoke tests (2 passing) verifying the infra
+- `src/test-helpers/insforge-admin.ts`: `cleanupTasks()`, `createTestUser()`, `signIn()`, `deleteUser()`, `getTaskCount()`, `rawSql()` — all using admin bearer token for test setup/teardown
+- `playwright.config.ts`: chromium project, baseURL `http://127.0.0.1:4200`, webServer auto-start
+- `@playwright/test@1.63.0` and chromium binary installed
+- npm scripts: `test:watch`, `e2e`, `e2e:headed`, `e2e:ui`, `e2e:install`
+
+### Removed
+- `src/app/app.spec.ts` — stale, referenced the removed "Hello, task-manager" template
+
+### Verification
+- `pnpm exec ng test --watch=false`: ✅ 2/2 smoke tests pass
+- `pnpm exec playwright --version`: ✅ 1.63.0
+- `playwright test --list`: ✅ reports 0 tests (Phase D will populate)
+
 ## [0.4.0] - 2026-09-17
 
 ### Added
