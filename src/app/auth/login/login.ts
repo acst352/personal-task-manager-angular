@@ -1,7 +1,7 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth.service';
+import { extractErrorMessage } from '../../core/errors';
 
 type Mode = 'signin' | 'signup' | 'verify';
 
@@ -69,7 +69,7 @@ export class Login {
         await this.auth.verifyEmail(this.email(), this.otp().trim());
       }
     } catch (e) {
-      this.error.set(extractMessage(e));
+      this.error.set(extractErrorMessage(e));
     } finally {
       this.submitting.set(false);
     }
@@ -86,7 +86,7 @@ export class Login {
       await this.auth.resendVerification(email);
       this.info.set('Te reenviamos el código. Revisa tu email.');
     } catch (e) {
-      this.error.set(extractMessage(e));
+      this.error.set(extractErrorMessage(e));
     } finally {
       this.submitting.set(false);
     }
@@ -102,23 +102,4 @@ export class Login {
     this.error.set(null);
     this.info.set(null);
   }
-}
-
-function extractMessage(e: unknown): string {
-  if (e instanceof HttpErrorResponse) {
-    const body = e.error;
-    if (body && typeof body === 'object') {
-      if (typeof body.message === 'string' && body.message) {
-        return body.message;
-      }
-      if (typeof body.error === 'string' && body.error) {
-        return body.error;
-      }
-    }
-    return `HTTP ${e.status} ${e.statusText || 'sin detalle'}`;
-  }
-  if (e instanceof Error) {
-    return e.message;
-  }
-  return 'Error desconocido';
 }

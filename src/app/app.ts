@@ -5,6 +5,7 @@ import { TaskItem } from './task-item/task-item';
 import { TaskForm } from './task-form/task-form';
 import { AuthService } from './auth/auth.service';
 import { Login } from './auth/login/login';
+import { extractErrorMessage } from './core/errors';
 
 @Component({
   selector: 'app-root',
@@ -38,7 +39,7 @@ export class App {
       return;
     }
     void this.tasksService.remove(id).catch((e: unknown) => {
-      this.actionError.set(this.toHttpError(e));
+      this.actionError.set(extractErrorMessage(e));
     });
   }
 
@@ -73,7 +74,7 @@ export class App {
         this.isCreating.set(false);
       }
     } catch (e) {
-      this.actionError.set(this.toHttpError(e));
+      this.actionError.set(extractErrorMessage(e));
     }
   }
 
@@ -83,17 +84,7 @@ export class App {
     this.isCreating.set(false);
   }
 
-  protected toHttpError(e: unknown) {
-    if (e && typeof e === 'object' && 'message' in e) {
-      return String((e as { message: unknown }).message);
-    }
-    return 'algo falló';
-  }
-
   protected getErrorMessage(err: unknown): string {
-    if (err && typeof err === 'object' && 'message' in err) {
-      return String((err as { message: unknown }).message);
-    }
-    return 'algo falló';
+    return extractErrorMessage(err);
   }
 }

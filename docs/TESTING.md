@@ -1,0 +1,303 @@
+# TESTING
+
+Cómo correr, escribir y debuggear tests en este proyecto.
+
+---
+
+## TL;DR
+
+```bash
+pnpm test              # vitest unit tests (39 tests, ~5s)
+pnpm test:watch        # vitest en watch mode
+pnpm e2e               # playwright e2e tests (12/13 passing, ~17s)
+pnpm e2e:headed        # playwright con browser visible
+pnpm e2e:ui            # playwright UI mode (debug interactivo)
+```
+
+---
+
+## Stack
+
+| Capa | Herramienta | Para qué |
+|---|---|---|
+| Unit | **vitest 4** + `@analogjs/vitest-angular` + jsdom | Servicios y componentes en aislamiento |
+| HTTP mock | `provideHttpClientTesting` + `HttpTestingController` | Mockear HttpClient para tests unit |
+| E2E | **Playwright 1.63** + chromium | Flujos completos en navegador real contra backend InsForge |
+
+Por qué dos niveles: unit tests son rápidos (ms) y específicos, e2e tests son lentos (s) pero prueban la integración real (Angular + HttpClient + signals + InsForge + RLS).
+
+---
+
+## Estructura
+
+```
+src/
+  test-setup.ts                # bootstrap vitest: jsdom, localStorage mock, beforeEach
+  test-helpers/
+    insforge-admin.ts          # cleanupTasks, createTestUser, signIn para setUp/tearDown
+  app/
+    auth/auth.service.spec.ts  # 16 unit tests
+    auth/login/login.spec.ts   # (futuro)
+    tasks.spec.ts              # 10 unit tests (incluye regresiones bugs #1, #2)
+    core/errors.spec.ts        # 11 unit tests
+e2e/
+  fixtures.ts                  # helpers compartidos (signIn, createTaskViaUI, etc.)
+  auth.spec.ts                 # 5 flujos
+  tasks.spec.ts                # 6 flujos (RLS isolation, delete confirm)
+  auth-switch.spec.ts          # 1 flujo (bug #3 regression)
+  auth-boot-validation.spec.ts # 1 flujo (token muerto)
+```
+
+---
+
+## Cómo correr los tests
+
+### Unit (vitest)
+
+```bash
+# Una sola vez
+pnpm test
+
+# Watch mode (re-corre al guardar)
+pnpm test:watch
+
+# Filtrar por nombre
+pnpm exec ng test --watch=false -- -t "signIn"
+```
+
+### E2E (playwright)
+
+```bash
+# Una sola vez (corre todos los tests en headless)
+pnpm e2e
+
+# Con navegador visible (debugging)
+pnpm e2e:headed
+
+# UI mode (step-through interactivo)
+pnpm e2e:ui
+
+# Solo un archivo
+pnpm exec playwright test e2e/auth.spec.ts
+
+# Solo un test por nombre
+pnpm exec playwright test --grep "AUTH-E2E-4"
+```
+
+El primer `pnpm e2e` puede tardar más porque Playwright arranca el dev server si no está corriendo (configurado vía `webServer`).
+
+---
+
+## Cómo añadir un nuevo test
+
+### Unit test (vitest)
+
+1. Crear archivo `<nombre>.spec.ts` junto al código que prueba
+2. Importar el módulo bajo test
+3. `TestBed.configureTestingModule({ providers: [...] })`
+4. Para tests que usan HttpClient: añadir `provideHttpClientTesting()`
+5. Escribir tests con `describe`/`it`/`expect`
+
+Ejemplo:
+
+```ts
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { MyService } from './my.service';
+
+describe('MyService', () => {
+  let service: MyService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), MyService],
+    });
+    service = TestBed.inject(MyService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => httpMock.verify());
+
+  it('does the thing', () => {
+    service.doThing();
+    const req = httpMock.expectOne('/api/endpoint');
+    expect(req.request.method).toBe('POST');
+    req.flush({ ok: true });
+  });
+});
+```
+
+### Gotcha: servicios `providedIn: 'root'`
+
+Servicios como `AuthService` son singletons. `TestBed` puede cachear la instancia entre tests. Para resetear:
+
+```ts
+beforeEach(() => {
+  TestBed.resetTestingModule();
+  // ... configure again
+  service = TestBed.inject(MyService);
+  service.signOut(); // reset internal state
+});
+```
+
+### E2E test (playwright)
+
+1. Crear archivo en `e2e/`
+2. Importar `test, expect` de `@playwright/test` y helpers de `./fixtures`
+3. `test.describe(...)` agrupa tests relacionados
+4. `test.beforeAll` para crear test users / limpiar BD una vez
+5. `test.afterAll` para cleanup (borrar users, limpiar tasks)
+6. `test.beforeEach` para `await page.goto('/')`
+
+Ejemplo:
+
+```ts
+import { test, expect } from '@playwright/test';
+import { signIn, createTestUser, deleteUser, cleanupTasks, createTaskViaUI } from './fixtures';
+
+test.describe('my feature', () => {
+  const email = `feature-${Date.now()}@example.com`;
+  const password = 'TestPassword123';
+  let userId: string;
+
+  test.beforeAll(async ({ request }) => {
+    await cleanupTasks(request);
+    const user = await createTestUser(request, email, password);
+    userId = user.id;
+  });
+
+  test.afterAll(async ({ request }) => {
+    await deleteUser(request, userId);
+    await cleanupTasks(request);
+  });
+
+  test('my flow', async ({ page }) => {
+    await signIn(page, email, password);
+    await createTaskViaUI(page, 'Test task');
+    await expect(page.getByText('Test task')).toBeVisible();
+  });
+});
+```
+
+---
+
+## Selectores de UI (cómo encontrar elementos)
+
+| Test usa | Elemento HTML tiene | Notas |
+|---|---|---|
+| `page.locator('input[name="email"]')` | `<input name="email">` | Más estable que labels |
+| `page.getByRole('button', { name: 'Entrar' })` | `<button>Entrar</button>` | Best practice accesibilidad |
+| `page.getByRole('heading', { name: /tareas pendientes/ })` | `<h1>` o `<h2>` con texto | Regex útil para textos dinámicos |
+| `page.getByText('exact match')` | cualquier elemento con texto exacto | Último recurso |
+| ❌ `page.getByLabel('Contraseña')` | multiple matches con toggle | Ver "Gotchas" |
+
+### Gotcha: `getByLabel` con password toggle
+
+Si el input de contraseña tiene un botón toggle al lado con `aria-label="Mostrar contraseña"`, **`getByLabel('Contraseña')` matchea ambos** (strict mode violation). Usar `page.locator('input[name="password"]')` en su lugar.
+
+---
+
+## Estrategia de mocks
+
+### Unit: `HttpTestingController`
+
+- `provideHttpClientTesting()` reemplaza el HttpHandler con uno fake
+- `httpMock.expectOne(url)` retorna el request que matchea
+- `req.flush(body)` simula la respuesta del servidor
+- Verificar headers, body, method en el request ANTES de flushear
+- `afterEach(() => httpMock.verify())` asegura que todos los requests esperados fueron flusheados
+
+### E2E: backend real con cleanup
+
+Los tests E2E pegan contra el backend real de InsForge. Estrategia:
+
+- Cada `describe` crea sus propios usuarios con email único (timestamp)
+- `beforeAll` limpia tasks + crea users
+- `afterAll` borra users + limpia tasks
+- ⚠️ **No hay cleanup cross-file**: si dos archivos crean usuarios con el mismo email, pueden colisionar. Usar siempre emails únicos.
+
+### Gotcha: `httpResource` es lazy
+
+`httpResource()` no hace fetch hasta que alguien lee `tasks.value()`. Para testear con HttpTestingController, hay que **forzar la lectura primero**:
+
+```ts
+// Mal — el httpResource no ha fetcheado aún
+expect(service.isLoading()).toBe(true);
+
+// Bien — fuerza el fetch
+const value = service.value();
+// ahora httpMock.expectOne() funciona
+```
+
+En la práctica, si los tests pasan aislados pero fallan en suite, suele ser httpResource lazy vs eager.
+
+---
+
+## Gotchas comunes
+
+### Test pollution entre archivos
+
+Los tests E2E comparten el mismo backend. Si un test crea tasks para un usuario y otro test reusa ese email, hay conflicto. **Mitigación actual**: cleanupTasks solo en beforeAll/afterAll del propio describe. **Pendiente**: cleanup cross-file global.
+
+### Test pollution dentro del mismo archivo
+
+Tests en el mismo describe comparten usuario (definido en beforeAll). Las tasks se acumulan. **Mitigación**: para tests sensibles al orden, usar `cleanupTasks` en `beforeEach`.
+
+### HttpTestingController + httpResource
+
+`httpResource` usa HttpClient internamente. HttpTestingController intercepta. Pero el ciclo de vida es perezoso — primer `value()` access dispara el fetch.
+
+### Tiempo de los tests
+
+- Unit: ms por test, suite completa < 10s
+- E2E: ~1-2s por test, suite completa ~20s con dev server compartido
+- `httpResource.reload()` es asíncrono — usa `await` antes de asserts
+
+### Strict mode en Playwright
+
+Por defecto, los queries de Playwright son strict (1 elemento). Si un selector matchea varios, falla con "strict mode violation". Soluciones:
+
+- Usar selector más específico (e.g. `input[name=email]` en lugar de `getByLabel('Email')`)
+- Usar `.first()`, `.nth(0)`, `.last()`
+- Filtrar con regex más específico
+
+---
+
+## Bugs cazados por los tests actuales
+
+| Bug | Test que lo caza |
+|---|---|
+| #1 DELETE silencioso | `tasks.spec.ts` "remove throws when 0 rows returned" |
+| #2 INSERT 403 RLS | `tasks.spec.ts` "create throws on 403 RLS" |
+| #3 Stale state al cambiar user | `e2e/auth-switch.spec.ts` (pasa aislado) |
+
+Si encuentras un bug en producción, escribe primero el test que lo caza, luego el fix.
+
+---
+
+## CI (futuro)
+
+Para integrar en CI:
+
+```yaml
+# .github/workflows/test.yml (ejemplo, NO creado aún)
+- run: pnpm install --frozen-lockfile
+- run: pnpm e2e:install
+- run: pnpm test
+- run: pnpm e2e
+```
+
+Los secrets de InsForge se pasan como variables de entorno. Los tests E2E deben apuntar a un proyecto de test separado (no el de dev).
+
+---
+
+## Referencias
+
+- [vitest docs](https://vitest.dev/)
+- [Playwright docs](https://playwright.dev/)
+- [Angular testing guide](https://angular.dev/guide/testing)
+- [`docs/SPEC.auth.md`](./SPEC.auth.md), [`docs/SPEC.tasks.md`](./SPEC.tasks.md), [`docs/SPEC.login-quality.md`](./SPEC.login-quality.md) — los contratos que los tests verifican
