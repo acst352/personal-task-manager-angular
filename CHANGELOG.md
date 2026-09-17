@@ -4,6 +4,23 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-17
+
+### Added
+- **E-3**: Interceptor now catches 401 on authenticated requests and calls `authService.signOut()`. Public auth endpoints (sessions, users, email/*) are excluded so login failures don't trigger logout. Implemented via `inject(AuthService)` inside the functional interceptor.
+- **E-4**: Login UI quality improvements:
+  - `emailValid` / `passwordValid` / `otpValid` computed signals for real-time client validation
+  - `formValid` computed: button disabled when form invalid or submitting
+  - `showPassword` signal + `passwordInputType` computed → toggle visibility with 👁 / 🙈 icons
+  - Inline hint messages (`hint-error` class) under each field when invalid
+  - `aria-invalid` on inputs, `aria-describedby` linking to hint messages
+  - `role="alert"` `aria-live="assertive"` on errors, `role="status"` on info messages
+  - 44px minimum button height for touch accessibility
+  - Better focus outlines and disabled contrast
+
+### Changed
+- Test fixtures updated to use `input[name=...]` selectors instead of `getByLabel` to avoid strict mode violations when password toggle's `aria-label` overlaps with the field's accessible name.
+
 ## [0.6.0] - 2026-09-17
 
 ### Added
