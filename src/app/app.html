@@ -14,7 +14,10 @@
   <button type="button" class="new-btn" (click)="onStartCreate()">+ Nueva tarea</button>
 
   @if (error(); as err) {
-    <p class="error">Error: {{ getErrorMessage(err) }}</p>
+    <p class="error">Error: {{ toHttpError(err) }}</p>
+  }
+  @if (actionError(); as err) {
+    <p class="error">{{ err }}</p>
   }
 
   @if (editing(); as task) {

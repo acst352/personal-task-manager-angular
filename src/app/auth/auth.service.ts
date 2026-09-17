@@ -117,6 +117,32 @@ export class AuthService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
+  async validateStoredSession(): Promise<void> {
+    const token = this.getAccessToken();
+    if (!token) {
+      return;
+    }
+    try {
+      const user = await firstValueFrom(
+        this.http.get<{ id: string; email: string; name?: string }>(
+          `${environment.insforge.baseUrl}/api/auth/sessions/current`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        ),
+      );
+      const fresh: AuthUser = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      };
+      localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+      this._user.set(fresh);
+    } catch (e) {
+      if (e instanceof HttpErrorResponse && (e.status === 401 || e.status === 403)) {
+        this.signOut();
+      }
+    }
+  }
+
   private persist(token: string, user: NonNullable<AuthResponse['user']>): void {
     const u: AuthUser = {
       id: user.id,

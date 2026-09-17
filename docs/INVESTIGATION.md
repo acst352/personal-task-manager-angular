@@ -2,8 +2,8 @@
 
 **Fecha**: 2026-09-17
 **Fase**: A del plan A→F
-**Estado**: ✅ Completada. RLS policy creada, BD limpia, diagnóstico confirmado.
-**Issues cerradas**: ICY-42, ICY-43, ICY-44, ICY-45, ICY-46, ICY-47
+**Estado**: ✅ Completada (extendida con Bug #3 tras feedback en vivo)
+**Issues cerradas**: ICY-42, ICY-43, ICY-44, ICY-45, ICY-46, ICY-47 + nuevos tests añadidos a Phase D
 
 ---
 
@@ -11,7 +11,14 @@
 
 El backend de InsForge tenía **RLS activado pero SIN ninguna policy** definida sobre la tabla `tasks`. Esto causa que **todas las operaciones de usuarios autenticados se rechacen por defecto** (Postgres RLS default-deny). El admin token (`ik_…`) bypasea RLS porque la tabla tiene `relforcerowsecurity = false`, por eso pudimos crear filas con curl admin pero no desde la app autenticada.
 
-**Fix aplicado en esta fase**: una policy que permite a usuarios autenticados CRUD solo de sus propias filas (`user_id = auth.uid()`). Esto resuelve el **Bug 2 (INSERT 403)**. El **Bug 1 (DELETE silencioso)** sigue pendiente y se arregla en Fase E con cambios en el cliente.
+**Fix aplicado en esta fase**:
+1. Policy `users_own_tasks` para `authenticated` role → resuelve **Bug 2 (INSERT 403)**
+2. `httpResource()` ahora es reactivo a `auth.currentUser()` → resuelve **Bug 3 (stale state al cambiar de usuario)**
+3. `validateStoredSession()` ejecuta al boot → resuelve **token expirado/muerto aceptado como válido**
+4. `tasks.service.ts:remove()` valida array vacío → resuelve **Bug 1 (DELETE silencioso)**
+5. Confirm dialog antes de borrar en `App.onRemove()`
+
+**Bug arquitectónico emergente (Bug #3)**: el `httpResource` original tenía URL constante que no dependía del usuario. Solo fetcha una vez al inicializar el service. Cuando el usuario cambia (login/logout/switch), el `tasks.value()` retenía los datos del usuario anterior. Resultado: usuario nuevo veía tareas del usuario previo, mezcladas con las suyas tras acciones. Esto NO estaba en mi lista inicial — es exactamente el tipo de bug que el testing riguroso debería cazar antes de producción.
 
 ---
 
@@ -292,3 +299,90 @@ Cuando escribamos las specs, hay que dejar explícito:
 3. **PostgREST devuelve 200 con `[]` cuando WHERE matchea 0 filas** — siempre usar `Prefer: return=representation` y validar el cuerpo, no asumir éxito por status code.
 4. **auth.uid() lee `sub` del JWT** — si el JWT no tiene `sub`, la policy filtra como si fueras otro usuario.
 5. **Phase A→F es útil** — el bug 1 era invisible sin el escenario "borrar tarea ajena", que solo se testea explícitamente.
+
+---
+
+## 7. Bug #3 — Stale state al cambiar de usuario
+
+**Reportado en vivo** tras fix de bugs #1 y #2. Es un bug **arquitectónico** que NO estaba en la investigación inicial.
+
+### Síntoma
+Usuario reporta confusión al alternar entre cuentas (kelp, icy) en la misma sesión SPA:
+- Login kelp → crear 2 tareas → ver 2 kelp ✅
+- Logout → login icy → **ver 2 kelp** ❌ (debería ver 0)
+- Crear 1 tarea como icy → ver 1 icy ✅
+- Logout → login kelp → **ver 1 icy** ❌
+- Borrar la "tarea de icy" desde cuenta kelp → RLS rechaza silenciosamente, pero `tasks.reload()` ahora usa token kelp → aparecen las 2 kelp de repente
+
+### Causa raíz
+
+En `tasks.ts` original:
+
+```ts
+readonly tasks = httpResource<Task[]>(() => ({
+  url: `${baseUrl}/api/database/records/tasks?select=*&order=created_at.desc`,
+}));
+```
+
+`httpResource` solo refetcha cuando cambian las señales accedidas dentro de la función de request. Como la URL es constante y no lee `auth.currentUser()`, el resource:
+1. Fetcha una vez al inicializar el service
+2. Nunca refetcha cuando cambia el usuario
+3. Solo refetcha con `reload()` explícito (en `create`, `update`, `remove`)
+
+Resultado: el `tasks.value()` queda cacheado en memoria con datos del primer usuario que hizo GET, ignorando cambios de identidad hasta la siguiente acción.
+
+### Fix aplicado
+
+```ts
+// tasks.ts (nuevo)
+export class TasksService {
+  private auth = inject(AuthService);
+
+  readonly tasks = httpResource<Task[]>(() => ({
+    url: `${baseUrl}/api/database/records/tasks?select=*&order=created_at.desc`,
+    headers: { 'X-Track-User': this.auth.currentUser()?.id ?? 'anon' },
+  }));
+  // ...
+}
+```
+
+Acceder a `this.auth.currentUser()` dentro de la función de request crea una **dependencia reactiva**: cuando el signal cambia (login, logout, switch), `httpResource` re-evalúa la función y refetcha. El header `X-Track-User` es solo para hacer explícita la dependencia; el header real de auth lo añade el interceptor.
+
+### Validación
+
+Después del fix, al recargar `localhost:4200`:
+1. Login kelp → ver 2 kelp
+2. Logout kelp → ver 0 (porque refetch con token anon → RLS filtra todo)
+3. Login icy → ver 0 (refetch con token icy)
+4. Crear tarea icy → ver 1 icy
+5. Logout icy → ver 0
+6. Login kelp → ver 2 kelp ✅
+
+### Bonus: validación de token al boot
+
+Adicional al fix del resource, `app.config.ts` añade `provideAppInitializer` que llama `AuthService.validateStoredSession()` antes del primer render. Si el token en localStorage está expirado o el server lo rechaza, se hace `signOut()` y el usuario ve Login aunque tenga token cacheado.
+
+```ts
+// auth.service.ts (nuevo método)
+async validateStoredSession(): Promise<void> {
+  const token = this.getAccessToken();
+  if (!token) return;
+  try {
+    const user = await firstValueFrom(
+      this.http.get(`${baseUrl}/api/auth/sessions/current`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    );
+    this._user.set({ id: user.id, email: user.email, name: user.name });
+  } catch (e) {
+    if (e instanceof HttpErrorResponse && (e.status === 401 || e.status === 403)) {
+      this.signOut();
+    }
+  }
+}
+```
+
+### Tests añadidos a Phase D
+
+- `e2e/auth-switch.spec.ts`: login → logout → login con otro user → verificar lista es la del nuevo
+- `e2e/auth-boot-validation.spec.ts`: localStorage con token muerto → reload → app debe mostrar Login

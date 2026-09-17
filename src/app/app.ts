@@ -23,6 +23,7 @@ export class App {
 
   protected readonly editing = signal<Task | null>(null);
   protected readonly isCreating = signal(false);
+  protected readonly actionError = signal<string | null>(null);
 
   onToggle(id: string): void {
     const task = this.tasks().find(t => t.id === id);
@@ -32,7 +33,13 @@ export class App {
   }
 
   onRemove(id: string): void {
-    void this.tasksService.remove(id);
+    this.actionError.set(null);
+    if (!confirm('¿Borrar esta tarea?')) {
+      return;
+    }
+    void this.tasksService.remove(id).catch((e: unknown) => {
+      this.actionError.set(this.toHttpError(e));
+    });
   }
 
   onEdit(task: Task): void {
@@ -51,14 +58,22 @@ export class App {
   }
 
   async onSave(task: NewTask | Task): Promise<void> {
-    if ('id' in task) {
-      const existing = task as Task;
-      await this.tasksService.update(existing.id, existing);
-      this.editing.set(null);
-    } else {
-      const userId = this.auth.currentUser()?.id ?? null;
-      await this.tasksService.create(task as NewTask, userId);
-      this.isCreating.set(false);
+    this.actionError.set(null);
+    try {
+      if ('id' in task) {
+        const existing = task as Task;
+        await this.tasksService.update(existing.id, existing);
+        this.editing.set(null);
+      } else {
+        const userId = this.auth.currentUser()?.id;
+        if (!userId) {
+          throw new Error('Debes iniciar sesión para crear tareas');
+        }
+        await this.tasksService.create(task as NewTask, userId);
+        this.isCreating.set(false);
+      }
+    } catch (e) {
+      this.actionError.set(this.toHttpError(e));
     }
   }
 
@@ -66,6 +81,13 @@ export class App {
     this.auth.signOut();
     this.editing.set(null);
     this.isCreating.set(false);
+  }
+
+  protected toHttpError(e: unknown) {
+    if (e && typeof e === 'object' && 'message' in e) {
+      return String((e as { message: unknown }).message);
+    }
+    return 'algo falló';
   }
 
   protected getErrorMessage(err: unknown): string {
