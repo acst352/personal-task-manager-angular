@@ -45,3 +45,8 @@ Thumbs.db
 
 # Agent / tooling local state
 .claude/
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+

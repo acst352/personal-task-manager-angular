@@ -1,4 +1,4 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, effect, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { NewTask, Task, TaskUpdate } from './task';
@@ -21,7 +21,6 @@ export class TasksService {
 
   readonly tasks = httpResource<Task[]>(() => ({
     url: `${environment.insforge.baseUrl}/api/database/records/${TABLE}?select=*&order=created_at.desc`,
-    headers: { 'X-Track-User': this.auth.currentUser()?.id ?? 'anon' },
   }));
 
   readonly value = computed(() => this.tasks.value() ?? []);
@@ -31,6 +30,13 @@ export class TasksService {
   readonly pendingCount = computed(
     () => this.value().filter(t => !t.done).length,
   );
+
+  constructor() {
+    effect(() => {
+      this.auth.currentUser();
+      this.tasks.reload();
+    });
+  }
 
   async create(task: NewTask, userId: string): Promise<Task> {
     const payload: CreatePayload = { ...task, user_id: userId };

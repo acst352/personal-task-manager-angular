@@ -123,16 +123,16 @@ export class AuthService {
       return;
     }
     try {
-      const user = await firstValueFrom(
-        this.http.get<{ id: string; email: string; name?: string }>(
+      const res = await firstValueFrom(
+        this.http.get<{ user: { id: string; email: string; name?: string } }>(
           `${environment.insforge.baseUrl}/api/auth/sessions/current`,
           { headers: { Authorization: `Bearer ${token}` } },
         ),
       );
       const fresh: AuthUser = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
+        id: res.user.id,
+        email: res.user.email,
+        name: res.user.name,
       };
       localStorage.setItem(USER_KEY, JSON.stringify(fresh));
       this._user.set(fresh);
