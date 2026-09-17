@@ -10,7 +10,6 @@ const TABLE = 'tasks';
 interface CreatePayload extends NewTask {
   user_id?: string | null;
 }
-type UpdatePayload = TaskUpdate;
 
 @Injectable({
   providedIn: 'root',
@@ -18,15 +17,8 @@ type UpdatePayload = TaskUpdate;
 export class TasksService {
   private http = inject(HttpClient);
 
-  private authHeaders() {
-    return {
-      Authorization: `Bearer ${environment.insforge.anonKey}`,
-    };
-  }
-
   readonly tasks = httpResource<Task[]>(() => ({
     url: `${environment.insforge.baseUrl}/api/database/records/${TABLE}?select=*&order=created_at.desc`,
-    headers: this.authHeaders(),
   }));
 
   readonly value = computed(() => this.tasks.value() ?? []);
@@ -43,12 +35,7 @@ export class TasksService {
       .post<Task[]>(
         `${environment.insforge.baseUrl}/api/database/records/${TABLE}`,
         [payload],
-        {
-          headers: {
-            ...this.authHeaders(),
-            Prefer: 'return=representation',
-          },
-        },
+        { headers: { Prefer: 'return=representation' } },
       )
       .toPromise();
     const created = (res ?? [])[0];
@@ -57,17 +44,11 @@ export class TasksService {
   }
 
   async update(id: string, patch: TaskUpdate): Promise<Task> {
-    const payload: UpdatePayload = patch;
     const res = await this.http
       .patch<Task[]>(
         `${environment.insforge.baseUrl}/api/database/records/${TABLE}?id=eq.${id}`,
-        payload,
-        {
-          headers: {
-            ...this.authHeaders(),
-            Prefer: 'return=representation',
-          },
-        },
+        patch,
+        { headers: { Prefer: 'return=representation' } },
       )
       .toPromise();
     const updated = (res ?? [])[0];
@@ -79,7 +60,6 @@ export class TasksService {
     await this.http
       .delete(
         `${environment.insforge.baseUrl}/api/database/records/${TABLE}?id=eq.${id}`,
-        { headers: this.authHeaders() },
       )
       .toPromise();
     this.tasks.reload();
