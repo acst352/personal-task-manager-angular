@@ -18,9 +18,15 @@ type UpdatePayload = TaskUpdate;
 export class TasksService {
   private http = inject(HttpClient);
 
+  private authHeaders() {
+    return {
+      Authorization: `Bearer ${environment.insforge.anonKey}`,
+    };
+  }
+
   readonly tasks = httpResource<Task[]>(() => ({
     url: `${environment.insforge.baseUrl}/api/database/records/${TABLE}?select=*&order=created_at.desc`,
-    headers: { apikey: environment.insforge.anonKey },
+    headers: this.authHeaders(),
   }));
 
   readonly value = computed(() => this.tasks.value() ?? []);
@@ -39,7 +45,7 @@ export class TasksService {
         [payload],
         {
           headers: {
-            apikey: environment.insforge.anonKey,
+            ...this.authHeaders(),
             Prefer: 'return=representation',
           },
         },
@@ -58,7 +64,7 @@ export class TasksService {
         payload,
         {
           headers: {
-            apikey: environment.insforge.anonKey,
+            ...this.authHeaders(),
             Prefer: 'return=representation',
           },
         },
@@ -73,7 +79,7 @@ export class TasksService {
     await this.http
       .delete(
         `${environment.insforge.baseUrl}/api/database/records/${TABLE}?id=eq.${id}`,
-        { headers: { apikey: environment.insforge.anonKey } },
+        { headers: this.authHeaders() },
       )
       .toPromise();
     this.tasks.reload();
