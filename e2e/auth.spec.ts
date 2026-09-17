@@ -22,8 +22,8 @@ test.describe('auth — login + logout flows', () => {
   });
 
   test('AUTH-E2E-1: login with invalid credentials shows error', async ({ page }) => {
-    await page.getByLabel('Email').fill(userEmail);
-    await page.getByLabel('Contraseña').fill('wrong-password');
+    await page.locator('input[name="email"]').fill(userEmail);
+    await page.locator('input[name="password"]').fill('wrong-password');
     await page.getByRole('button', { name: 'Entrar' }).click();
     await expect(page.getByText(/Invalid credentials|incorrect/i)).toBeVisible({
       timeout: 5_000,

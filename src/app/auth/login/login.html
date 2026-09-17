@@ -1,4 +1,4 @@
-<form (submit)="onSubmit($event)" class="login-form">
+<form (submit)="onSubmit($event)" class="login-form" novalidate>
   @switch (mode()) {
     @case ('signin') {
       <h2>Iniciar sesión</h2>
@@ -11,25 +11,47 @@
           (ngModelChange)="email.set($event)"
           required
           autocomplete="email"
+          [attr.aria-invalid]="email().length > 0 && !emailValid()"
+          [attr.aria-describedby]="email().length > 0 && !emailValid() ? 'email-error' : null"
           autofocus
         />
+        @if (email().length > 0 && !emailValid()) {
+          <small id="email-error" class="hint hint-error">
+            Introduce un email válido (ej: nombre@dominio.com)
+          </small>
+        }
       </label>
+
       <label>
         Contraseña
-        <input
-          type="password"
-          name="password"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
-          required
-          autocomplete="current-password"
-        />
+        <div class="password-row">
+          <input
+            [type]="passwordInputType()"
+            name="password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            required
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            {{ showPassword() ? '🙈' : '👁' }}
+          </button>
+        </div>
+        @if (password().length > 0 && !passwordValid()) {
+          <small class="hint hint-error">Mínimo 6 caracteres</small>
+        }
       </label>
     }
     @case ('signup') {
       <h2>Crear cuenta</h2>
       <label>
-        Nombre
+        Nombre <span class="optional">(opcional)</span>
         <input
           type="text"
           name="name"
@@ -47,19 +69,39 @@
           (ngModelChange)="email.set($event)"
           required
           autocomplete="email"
+          [attr.aria-invalid]="email().length > 0 && !emailValid()"
+          autofocus
         />
+        @if (email().length > 0 && !emailValid()) {
+          <small class="hint hint-error">Email inválido</small>
+        }
       </label>
       <label>
         Contraseña
-        <input
-          type="password"
-          name="password"
-          [ngModel]="password()"
-          (ngModelChange)="password.set($event)"
-          required
-          minlength="6"
-          autocomplete="new-password"
-        />
+        <div class="password-row">
+          <input
+            [type]="passwordInputType()"
+            name="password"
+            [ngModel]="password()"
+            (ngModelChange)="password.set($event)"
+            required
+            minlength="6"
+            autocomplete="new-password"
+            [attr.aria-invalid]="password().length > 0 && !passwordValid()"
+          />
+          <button
+            type="button"
+            class="toggle"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            {{ showPassword() ? '🙈' : '👁' }}
+          </button>
+        </div>
+        @if (password().length > 0 && !passwordValid()) {
+          <small class="hint hint-error">Mínimo 6 caracteres</small>
+        }
       </label>
     }
     @case ('verify') {
@@ -78,6 +120,7 @@
           required
           inputmode="numeric"
           autocomplete="one-time-code"
+          aria-label="Código de verificación de 6 dígitos"
           autofocus
         />
       </label>
@@ -85,14 +128,14 @@
   }
 
   @if (error(); as err) {
-    <p class="error">{{ err }}</p>
+    <p class="error" role="alert" aria-live="assertive">{{ err }}</p>
   }
   @if (info(); as msg) {
-    <p class="info success">{{ msg }}</p>
+    <p class="info success" role="status" aria-live="polite">{{ msg }}</p>
   }
 
   <div class="actions">
-    <button type="submit" [disabled]="submitting()">
+    <button type="submit" [disabled]="!formValid()" [attr.aria-busy]="submitting()">
       @switch (mode()) {
         @case ('signin') { Entrar }
         @case ('signup') { Registrarme }
@@ -102,16 +145,22 @@
 
     @switch (mode()) {
       @case ('signin') {
-        <button type="button" (click)="toggleMode()">Crear cuenta</button>
+        <button type="button" (click)="toggleMode()" [disabled]="submitting()">
+          Crear cuenta
+        </button>
       }
       @case ('signup') {
-        <button type="button" (click)="toggleMode()">Ya tengo cuenta</button>
+        <button type="button" (click)="toggleMode()" [disabled]="submitting()">
+          Ya tengo cuenta
+        </button>
       }
       @case ('verify') {
         <button type="button" (click)="onResendOtp()" [disabled]="submitting()">
           Reenviar código
         </button>
-        <button type="button" (click)="onBackToSignIn()">Atrás</button>
+        <button type="button" (click)="onBackToSignIn()" [disabled]="submitting()">
+          Atrás
+        </button>
       }
     }
   </div>

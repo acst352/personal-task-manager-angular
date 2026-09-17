@@ -95,8 +95,8 @@ export async function signIn(
     }
   });
   await page.reload();
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Contraseña').fill(password);
+  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="password"]').fill(password);
   await page.getByRole('button', { name: 'Entrar' }).click();
   await expect(page.getByRole('heading', { name: /tareas pendientes/i })).toBeVisible({
     timeout: 10_000,
@@ -105,8 +105,8 @@ export async function signIn(
 
 export async function createTaskViaUI(page: Page, title: string, priority: 'Baja' | 'Media' | 'Alta' = 'Media'): Promise<void> {
   await page.getByRole('button', { name: '+ Nueva tarea' }).click();
-  await page.getByLabel('Título').fill(title);
-  await page.getByLabel('Prioridad').selectOption(priority);
+  await page.locator('input[name="title"]').fill(title);
+  await page.locator('select[name="priority"]').selectOption(priority);
   await page.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.getByText(title)).toBeVisible({ timeout: 5_000 });
 }

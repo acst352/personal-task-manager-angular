@@ -9,11 +9,23 @@
   margin: 4rem auto;
 }
 
+.login-form h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+}
+
 .login-form label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.9rem;
+  color: #333;
+}
+
+.login-form label .optional {
+  color: #888;
+  font-weight: normal;
+  font-size: 0.8rem;
 }
 
 .login-form input {
@@ -21,6 +33,53 @@
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+  font-family: inherit;
+}
+
+.login-form input[aria-invalid='true'] {
+  border-color: crimson;
+}
+
+.login-form input:focus {
+  outline: 2px solid #2c5aa0;
+  outline-offset: -1px;
+}
+
+.login-form .password-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.login-form .password-row input {
+  flex: 1;
+}
+
+.login-form .toggle {
+  padding: 0.25rem 0.5rem;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fafafa;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.login-form .toggle:hover {
+  background: #f0f0f0;
+}
+
+.login-form .toggle:focus {
+  outline: 2px solid #2c5aa0;
+  outline-offset: -1px;
+}
+
+.login-form .hint {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.login-form .hint-error {
+  color: crimson;
 }
 
 .login-form p.info {
@@ -37,6 +96,10 @@
   color: crimson;
   font-size: 0.85rem;
   margin: 0;
+  padding: 0.5rem;
+  background: #fff0f0;
+  border: 1px solid #ffcccc;
+  border-radius: 4px;
 }
 
 .login-form .actions {
@@ -50,6 +113,8 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 0.95rem;
+  min-height: 44px;
 }
 
 .login-form button[type='submit'] {
@@ -58,11 +123,19 @@
   flex: 1;
 }
 
+.login-form button[type='submit']:disabled {
+  background: #9bb6d8;
+}
+
 .login-form button[type='button'] {
   background: #eee;
 }
 
+.login-form button:focus {
+  outline: 2px solid #2c5aa0;
+  outline-offset: 1px;
+}
+
 .login-form button:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
 }
