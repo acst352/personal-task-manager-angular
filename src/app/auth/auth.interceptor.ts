@@ -13,15 +13,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const authService = inject(AuthService);
   const userToken = authService.getAccessToken();
+  const token = userToken ?? environment.insforge.anonKey;
 
-  let authReq = req;
-  if (userToken) {
-    authReq = req.clone({
-      setHeaders: { Authorization: `Bearer ${userToken}` },
-    });
-  }
-
-  return next(authReq).pipe(
+  return next(
+    req.clone({
+      setHeaders: { Authorization: `Bearer ${token}` },
+    }),
+  ).pipe(
     catchError((err) => {
       if (
         err instanceof HttpErrorResponse &&
