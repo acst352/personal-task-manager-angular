@@ -4,6 +4,36 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-17
+
+### Changed
+- **F-1**: Error handling consolidated in `src/app/core/errors.ts`:
+  - `extractErrorMessage(e)` — single entry point for any error
+  - `mapHttpError(status, body, statusText)` — pure function with friendly messages per HTTP status (401, 403, 404, 409, 429, 5xx)
+- Removed duplicate `extractMessage` from `login.ts` and `toHttpError` from `app.ts`.
+
+### Added
+- **F-3**: `docs/TESTING.md` covering test stack, structure, commands, how to add new tests, selector strategies, mock approach, common gotchas, and bugs caught by the suite.
+- 11 unit tests in `src/app/core/errors.spec.ts` covering the new error helpers.
+
+### Verified
+- 39/39 unit tests green (was 28/28 before refactor + new tests)
+- 12/13 e2e tests green (auth-switch flaky in full suite, passes in isolation)
+- `ng build` clean
+- App manually verified in browser
+
+### Milestone
+**v1.0.0 = production-ready** (per PRD). The personal task manager meets all success criteria:
+- ✅ User can sign up, log in, persist session
+- ✅ CRUD with RLS isolation (per-user)
+- ✅ Stale state bug fixed (bug #3 reactivity)
+- ✅ Silent DELETE bug fixed (bug #1 return-representation)
+- ✅ RLS insert bug fixed (bug #2 policy)
+- ✅ Specific error messages (no "error desconocido")
+- ✅ Login UI professional (validation, accessibility, password toggle)
+- ✅ 39 unit tests + 12 e2e tests covering regressions
+- ✅ Docs: PRD, SPECs (3), INVESTIGATION, TESTING, VERSIONING, CHANGELOG
+
 ## [0.7.0] - 2026-09-17
 
 ### Added
