@@ -4,6 +4,33 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-18
+
+### Added
+- **ESLint v10 + Angular ESLint v22** (flat config in `eslint.config.js`):
+  - TypeScript strict rules (no-explicit-any, no-unused-vars, prefer-const)
+  - Angular rules (directive-class-suffix, prefer-on-push)
+  - Strict console/debugger rules
+  - Component-class-suffix disabled (we use Login/TaskForm/TaskItem naming)
+- **Coverage thresholds** in `vitest.config.ts`:
+  - 80% statements, 75% branches, 80% functions, 80% lines
+  - HTML + lcov + text reporters
+  - Current coverage: 90.98% / 88.63% / 80% / 92.52% — all thresholds met
+- **Husky + lint-staged** for pre-commit hooks:
+  - `.husky/pre-commit` runs `npx lint-staged`
+  - lint-staged config: ESLint fix + Prettier write for staged files
+  - Configured via `git config core.hooksPath .husky`
+- **Signup regression test** (`e2e/signup-flow.spec.ts`):
+  - 3 tests: clean signup, invalid email blocks submit, short password blocks submit
+  - Main test would have caught the v1.0.1 regression (no console errors during signup)
+- New scripts in `package.json`: `lint`, `lint:fix`, `format`, `format:check`, `test:coverage`, `verify` (full CI gate)
+
+### Deferred (require GitHub remote or external account)
+- GitHub Actions CI
+- Codecov upload
+- Lighthouse CI
+- Snyk + SonarQube Cloud
+
 ## [1.0.1] - 2026-09-17
 
 ### Fixed
