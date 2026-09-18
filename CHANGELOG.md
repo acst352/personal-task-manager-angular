@@ -92,7 +92,7 @@ Documented in `docs/TESTING.md` under "Bundle analyzer y size budget"
   - Timeout: 20 min
 - Documented in `docs/TESTING.md` under "CI (GitHub Actions)"
 
-## [1.1.1] - 2026-09-18
+## [1.1.2] - 2026-09-18
 
 ### Added
 - **Pre-push guard** (`.husky/pre-push` + `scripts/prepush-check.sh`):
@@ -100,6 +100,21 @@ Documented in `docs/TESTING.md` under "Bundle analyzer y size budget"
 - Documented in `docs/TESTING.md` under "Pre-push guard"
 - New script: `pnpm prepush` (manual run)
 - Override: `PREPUSH_THRESHOLD=N git push`
+
+## [1.1.1] - 2026-09-18
+
+### Changed
+- **Security hardening before first public push** (commit `8a23ff7`):
+  - `src/environments/environment.ts`: added explicit comment documenting the security model — the InsForge anonKey is a publishable client-side key by design (same model as Supabase anon keys). Real data protection comes from RLS on the backend, not from hiding this key. Documented the rotation procedure if the key ever leaks.
+  - `docs/INVESTIGATION.md`: replaced literal anonKey with `REDACTED` placeholder (the key was inline in a SQL example showing RLS investigation)
+  - `opencode.json`: untracked from git (personal opencode agent config, not project source). Regenerate locally with `npx @insforge/install --client opencode ...`
+  - `.gitignore`: restored FULL Angular CLI defaults (was truncated to 13 lines in a previous overwrite, dropping patterns for `node_modules`, `dist`, `.angular/cache`, `coverage`, etc.) PLUS new patterns for `.env*` and `opencode.json`. The truncation bug would have caused `git add .` to stage 11,047 paths including `node_modules` on first push.
+  - `.env.example`: placeholder documentation file (committed)
+
+### Notes
+- `src/environments/environment.ts` contains the anonKey (intentional, public by design)
+- All docs anonymized
+- No git history rewrite needed (nothing was pushed yet at this point)
 
 ## [1.1.0] - 2026-09-18
 
