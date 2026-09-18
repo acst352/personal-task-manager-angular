@@ -227,7 +227,7 @@ DELETE FROM tasks WHERE id != '00000000-0000-0000-0000-000000000000';
 |---|---|
 | Tabla `tasks` | 0 filas, RLS habilitado, 1 policy (`users_own_tasks`) |
 | `auth.users` | 2 usuarios: `icy@colimasoft.com` (id `fa043192-141a-4cd3-a0b5-95a435630f34`), `kelp@colimasoft.com` |
-| Console admin | Token `ik_b91c9f0f0c6e8824e0b7242d56609ad1` (project_admin, bypasea RLS) |
+| Console admin | Token `<REDACTED — see .env.example>` (project_admin, bypasea RLS) |
 
 ---
 

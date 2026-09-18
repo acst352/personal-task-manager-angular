@@ -50,3 +50,11 @@ Thumbs.db
 test-results/
 playwright-report/
 
+# Secrets — must NEVER be committed (added for public repo safety)
+.env
+.env.*
+!.env.example
+
+# opencode agent config — personal to each developer, regenerate locally
+# with: npx @insforge/install --client opencode --env API_KEY=... --env API_BASE_URL=...
+opencode.json
