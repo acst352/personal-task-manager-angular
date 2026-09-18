@@ -18,6 +18,11 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
   - Explains Vercel auto-detected `VITE_INSFORGE_*` env vars (false positive for Angular projects — `import.meta.env` is Vite-specific)
   - Why the anonKey in `environment.ts` is publishable by design (RLS is the real security boundary)
   - Migration path to true env vars if ever needed
+- **Tooling inventory** (`docs/TOOLING.md`):
+  - Canonical list of all 24 tools across 12 categories (lint, tests, security, CI, deploy, etc.)
+  - Each row includes `Since` column with the version that introduced the tool
+  - "Tooling changelog" at bottom for per-release tooling changes
+  - Deprecation policy + migration notes sections for future tooling changes
 
 ### Notes
 - No version bump required — all entries are documentation-only.
