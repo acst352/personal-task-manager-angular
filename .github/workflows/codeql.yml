@@ -1,0 +1,54 @@
+name: CodeQL
+
+# GitHub-native security scanning. Runs CodeQL on every push and PR,
+# plus weekly cron. CodeQL is free for public repos y corre en la
+# infraestructura de GitHub (no consume nuestros CI minutes).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Semanal lunes 06:00 UTC — cazas nuevas vulnerabilidades en deps.
+    - cron: '0 6 * * 1'
+
+permissions:
+  # Necesario para que CodeQL suba resultados al Security tab.
+  security-events: write
+  # Necesario para checkout y leer el código.
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: typescript
+            # Build mode "none" porque el proyecto no requiere build step
+            # para análisis estático. CodeQL solo necesita los .ts files.
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # Default: security-and-quality. Cubre:
+          # - security: SQL injection, XSS, path traversal, etc.
+          # - quality: code smells, unused vars, etc.
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'

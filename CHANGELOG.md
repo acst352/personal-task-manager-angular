@@ -4,6 +4,23 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-18
+
+### Added
+- **GitHub CodeQL** (`.github/workflows/codeql.yml`):
+  - Native security scanning on every push, PR, and weekly (Mon 06:00 UTC)
+  - Uses `security-and-quality` query pack (SQL injection, XSS, path traversal, command injection, hardcoded credentials, etc.)
+  - Language: TypeScript, build-mode: none
+  - Free for public repos; runs on GitHub infrastructure (no CI minutes consumed)
+  - Permissions: `security-events: write` para subir resultados al Security tab
+  - Results visible en repo → Security → Code scanning alerts
+
+### Notes
+- Decisión: CodeQL sobre Semgrep porque es nativo (no requiere external account, no envía código a 3rd party).
+- CodeQL complementa Dependabot: Dependabot caza vulnerabilidades en deps, CodeQL en código propio.
+
+Documented in `docs/TESTING.md` under "CodeQL (security scanning)"
+
 ## [1.7.0] - 2026-09-18
 
 ### Added

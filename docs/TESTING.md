@@ -380,6 +380,87 @@ Servicios 3rd party como Percy o Chromatic ofrecen más features (smart diffing,
 
 Para un proyecto de 5 snapshots, Playwright nativo es suficiente. Si crece a 50+ snapshots, considerar migrar.
 
+---
+
+## CodeQL (security scanning)
+
+`.github/workflows/codeql.yml` corre GitHub CodeQL en cada push, PR, y semanalmente.
+
+### Por qué CodeQL y no Semgrep
+
+| | CodeQL | Semgrep |
+|---|---|---|
+| Costo para public repo | ✅ gratis | ✅ gratis |
+| Auth externa | ❌ no | ✅ Semgrep.dev account |
+| Privacy | ✅ corre en GitHub infra | ⚠️ código va a Semgrep cloud |
+| CI minutes consumidos | ❌ no (workflow separado) | ✅ sí |
+| Setup | 1 workflow file | CLI install + config |
+| Reglas | Pre-built security + quality | Custom + pre-built |
+
+CodeQL es la opción correcta para este proyecto (OSS, público, sin external dependencies).
+
+### Qué escanea
+
+CodeQL con el `security-and-quality` query pack detecta:
+
+**Seguridad**:
+- SQL injection
+- XSS (Cross-Site Scripting)
+- Path traversal
+- Command injection
+- Deserialización insegura
+- Hardcoded credentials (regex patterns)
+- Prototype pollution
+- Server-side request forgery (SSRF)
+
+**Quality**:
+- Unused variables
+- Empty catch blocks
+- Duplicated code
+- Inefficient regular expressions
+
+### Cómo ver resultados
+
+1. GitHub repo → tab **Security** → **Code scanning alerts**
+2. Cada alerta tiene:
+   - Severidad (Critical / High / Medium / Low)
+   - CWE classification
+   - Path al archivo + línea exacta
+   - Suggested fix (a veces)
+3. Click en "Fix" si quieres crear un PR automático (algunas alertas)
+
+### Configuración del workflow
+
+```yaml
+on:
+  push: branches: [main]
+  pull_request: branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # Semanal lunes 06:00 UTC
+
+jobs:
+  analyze:
+    strategy:
+      matrix:
+        include:
+          - language: typescript
+            build-mode: none  # No requiere build para análisis estático
+    permissions:
+      security-events: write  # Necesario para subir resultados al Security tab
+```
+
+### Cuando CodeQL encuentra algo
+
+**False positive**: dismiss con razón (e.g., "test fixture, not user input")
+**Real issue**: fix el código, push, y CodeQL re-scanea automáticamente
+**Real issue que no podemos fix ahora**: dismiss con `won't fix` y justificación
+
+### Limitaciones
+
+- CodeQL es un static analyzer — solo ve el código, no el comportamiento en runtime
+- Para auditoría de runtime (e.g., dependency confusion, supply chain), usar Dependabot (ya configurado en `phase 6`)
+- CodeQL tiene falsos positivos ocasionalmente — no todos los alerts son bugs reales
+
 ### HttpTestingController + httpResource
 
 `httpResource` usa HttpClient internamente. HttpTestingController intercepta. Pero el ciclo de vida es perezoso — primer `value()` access dispara el fetch.
