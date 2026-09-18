@@ -4,6 +4,27 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-18
+
+### Added
+- **Visual regression tests** (`e2e/visual.spec.ts`):
+  - 5 snapshots de estados UI críticos: login form, login error, empty tasks list, tasks with items, tasks with done
+  - Uses Playwright's built-in `expect.toHaveScreenshot()` (no 3rd party deps)
+  - 2% pixel diff tolerance (`maxDiffPixelRatio: 0.02`) para cross-platform font rendering
+  - Total snapshot size: ~77 KB en `e2e/__snapshots__/`
+- **Cross-platform snapshots** (`playwright.config.ts`):
+  - `snapshotPathTemplate: '{testDir}/__snapshots__/{arg}{ext}'` evita el suffix `-chromium-win32`
+  - Mismo baseline funciona en Linux CI y Windows local
+- **Scripts**:
+  - `pnpm e2e:visual` — solo visual regression tests
+  - `pnpm e2e:visual:update` — regenerar baselines (para cambios intencionales)
+
+### Result
+- **21/21 e2e tests passing** (16 functional + 5 visual)
+- Suite runtime: ~43s (incluye 5 visual tests, ~10s extra)
+
+Documented in `docs/TESTING.md` under "Visual regression tests (Playwright snapshots)"
+
 ## [1.6.0] - 2026-09-18
 
 ### Fixed

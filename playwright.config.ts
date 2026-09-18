@@ -18,6 +18,10 @@ export default defineConfig({
   expect: {
     timeout: 5_000,
   },
+  // Snapshots cross-platform: el default incluye el platform name (e.g.
+  // login-form-chromium-win32.png), lo que rompe CI en Linux. Override
+  // para usar el nombre limpio: e2e/__snapshots__/{arg}.png
+  snapshotPathTemplate: '{testDir}/__snapshots__/{arg}{ext}',
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',

@@ -288,6 +288,98 @@ Tests que interactúan con un task específico usan `page.locator('li:has-text("
 
 Ambos runs idénticos (16/16 en 34s), confirmado deterministic.
 
+---
+
+## Visual regression tests (Playwright snapshots)
+
+`e2e/visual.spec.ts` captura screenshots de estados UI críticos y los compara contra baselines.
+
+### Estados cubiertos
+
+| Snapshot | Estado |
+|---|---|
+| `login-form.png` | Login form inicial |
+| `login-error.png` | Login form con error de credenciales |
+| `tasks-empty.png` | Lista de tasks vacía (logged in) |
+| `tasks-with-items.png` | Lista con 3 tasks (variedad de prioridades) |
+| `tasks-with-done.png` | Lista con 1 task completada (clase `.done`) |
+
+### Cómo funciona
+
+`expect(page).toHaveScreenshot('name.png')` captura el estado actual y compara con el baseline. Si difiere más del threshold, falla el test.
+
+```ts
+await expect(page).toHaveScreenshot('login-form.png', {
+  maxDiffPixelRatio: 0.02,  // 2% tolerancia para font rendering cross-platform
+});
+```
+
+### Snapshots cross-platform
+
+`playwright.config.ts` configura:
+
+```ts
+snapshotPathTemplate: '{testDir}/__snapshots__/{arg}{ext}',
+```
+
+Esto evita el suffix `-chromium-win32` del default, permitiendo que el mismo baseline funcione en Linux CI y Windows local. Sin esto, CI falla porque no encuentra `login-form-chromium-linux.png`.
+
+### Cómo actualizar snapshots (cambios intencionales)
+
+```bash
+pnpm e2e:visual:update    # regenera baselines
+git diff e2e/__snapshots__  # revisar visualmente que los cambios son OK
+git add e2e/__snapshots__
+git commit -m "chore: update visual snapshots for new feature"
+```
+
+**Cuándo actualizar**:
+- Cambias CSS o layout intencionalmente
+- Añades un nuevo estado UI al snapshot set
+- Cambias el branding/logo
+
+**Cuándo NO actualizar**:
+- El test falla porque rompiste algo sin querer (debe arreglarse el código, no el snapshot)
+- Sospechas que el snapshot es incorrecto (revisar el código que renderiza)
+
+### Cuándo falla un test visual
+
+CI muestra 3 archivos en el artifact del run:
+- `<name>-actual.png`: el screenshot que tomó CI
+- `<name>-expected.png`: el baseline
+- `<name>-diff.png`: diferencias pixel-by-pixel
+
+El diff usa rojo para pixels que difieren. Si el cambio es intencional → `pnpm e2e:visual:update`. Si no → arreglar el código.
+
+### Threshold tuning
+
+`maxDiffPixelRatio: 0.02` permite hasta 2% de pixels diferentes. Esto cubre:
+- Anti-aliasing de fonts (Linux usa Cairo, Windows usa DirectWrite)
+- Sub-pixel rendering (pequeñas diferencias en posición 1-pixel)
+- Color profile del display
+
+Si necesitas más tolerancia para algún test específico:
+```ts
+await expect(page).toHaveScreenshot('name.png', {
+  maxDiffPixelRatio: 0.05,  // 5% para tests con muchas animaciones/transiciones
+});
+```
+
+### Limitaciones conocidas
+
+- **Tests visuales son frágiles por naturaleza**: cualquier cambio en CSS, fonts, browser updates, o incluso la versión de Chromium puede romperlos. Es la naturaleza del pixel-diff.
+- **Solo chromium**: si añades firefox/webkit, cada uno tendrá su propia baseline.
+- **No detecta cambios semánticos**: si cambias el HTML a `<button>` en vez de `<a>` y visualmente se ve igual, no se detecta.
+
+### Por qué no usar Percy/Chromatic
+
+Servicios 3rd party como Percy o Chromatic ofrecen más features (smart diffing, multi-browser, baseline management UI). Requieren:
+- Cuenta externa (costo)
+- Integración adicional (API tokens, webhooks)
+- Otra dependencia fuera de GitHub
+
+Para un proyecto de 5 snapshots, Playwright nativo es suficiente. Si crece a 50+ snapshots, considerar migrar.
+
 ### HttpTestingController + httpResource
 
 `httpResource` usa HttpClient internamente. HttpTestingController intercepta. Pero el ciclo de vida es perezoso — primer `value()` access dispara el fetch.
