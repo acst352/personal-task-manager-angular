@@ -542,6 +542,89 @@ pnpm build:analyze
 # abrir dist/bundle-report.html en browser
 # buscar módulos grandes (ng/* packages, dependencies de terceros)
 ```
+
+---
+
+## Dependabot (auto-update dependencies + security patches)
+
+`.github/dependabot.yml` configura GitHub Dependabot para mantener las dependencias actualizadas.
+
+### Qué trackea
+
+| Ecosystem | Schedule | PRs simultáneos |
+|---|---|---|
+| `npm` (package.json) | Semanal, lunes 04:00 UTC | 5 |
+| `github-actions` (workflows) | Semanal, lunes 04:00 UTC | 3 |
+
+### Auto-merge
+
+`.github/workflows/dependabot-auto-merge.yml` auto-mergea:
+
+| Update type | Acción | Por qué |
+|---|---|---|
+| `semver-patch` (x.y.Z) | Auto-merge si CI pasa | Bug fixes, no breaking |
+| `semver-minor` (x.Y.z) | Auto-merge si CI pasa | New features backwards-compat |
+| `semver-major` (X.y.z) | **Manual review** | Puede romper API |
+
+Usa `peter-evans/enable-pull-request-automerge@v3` para activar auto-merge vía GitHub API.
+
+### Commit message convention
+
+Dependabot PRs usan `chore(deps)` / `chore(dev-deps)` / `ci` prefixes:
+
+```
+chore(deps): bump @angular/core from 21.2.0 to 21.2.1
+chore(dev-deps): bump @angular/build from 21.2.0 to 21.2.1
+ci: bump actions/checkout from 4 to 5
+```
+
+Compatible con commitlint (type-enum, scope-case lower).
+
+### Ignora major updates de Angular
+
+```yaml
+ignore:
+  - dependency-name: "@angular/*"
+    update-types: ["version-update:semver-major"]
+```
+
+Angular majors requieren migración manual (refactor de imports, breaking changes en tests, etc.). El equipo los maneja con planning, no auto.
+
+### Agrupación
+
+Patch y minor updates se agrupan en un solo PR. Major updates quedan individuales. Esto reduce el "PR noise" sin sacrificar visibilidad de cambios grandes.
+
+### Cómo aplicar manualmente
+
+```bash
+# Actualizar una dep específica
+pnpm update @angular/core
+
+# Actualizar todo dentro del rango semver
+pnpm update
+
+# Forzar major update (revisa breaking changes primero)
+pnpm update @angular/core@22
+```
+
+### Cómo desactivar
+
+Si Dependabot se vuelve molesto (e.g. demasiados PRs en ecosystem pequeño):
+
+```yaml
+# .github/dependabot.yml
+updates:
+  - package-ecosystem: "npm"
+    open-pull-requests-limit: 0  # efectivamente desactiva
+```
+
+O eliminar `.github/dependabot.yml` completo.
+
+### Vulnerabilidades (security advisories)
+
+Dependabot crea PRs automáticamente cuando detecta vulnerabilidades (severity low/medium/high/critical). Estos se mergean con prioridad.
+
+Estado actual: 1 vulnerabilidad low conocida (`esbuild` path traversal en Windows, transitive dep — se arreglará automáticamente cuando el upstream publique fix en lockfile).
 ```
 
 ---

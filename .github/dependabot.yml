@@ -1,0 +1,62 @@
+version: 2
+updates:
+  # Track npm dependencies (angular, insforge SDK, dev tools, etc.)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    # Límite de PRs abiertos a la vez. Sin esto, Dependabot podría abrir 50 PRs
+    # en una sola corrida. 5 es suficiente para visibilidad sin spam.
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+    # Commit message convention para que commitlint acepte los PRs de Dependabot.
+    # Sin esto, commits como "Bump @angular/core from 21.2.0 to 21.2.1" fallan
+    # el rule type-empty porque no empiezan con "feat: " / "fix: " etc.
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+      include: "scope"
+    # Agrupar patches + minors para evitar PRs separados por paquete.
+    # Major updates quedan como PRs individuales para revisión manual.
+    groups:
+      patch-and-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Ignorar major updates de Angular (requieren migración manual, no auto).
+    # El equipo los hace cuando está listo para actualizar.
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types: ["version-update:semver-major"]
+
+  # Track GitHub Actions versions (actions/checkout, setup-node, etc.)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    groups:
+      actions-patch-and-minor:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

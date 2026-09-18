@@ -4,6 +4,26 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-18
+
+### Added
+- **GitHub Dependabot** (`.github/dependabot.yml`):
+  - Tracks `npm` (5 PR limit) and `github-actions` (3 PR limit)
+  - Weekly schedule: lunes 04:00 UTC
+  - Groups patch+minor updates; major updates quedan individuales
+  - Ignores major updates de `@angular/*` (requieren migración manual)
+  - Commit message prefix `chore(deps)` / `chore(dev-deps)` / `ci` (commitlint-friendly)
+- **Auto-merge workflow** (`.github/workflows/dependabot-auto-merge.yml`):
+  - Auto-mergea patch + minor updates si CI pasa
+  - Major updates quedan para revisión manual
+  - Usa `peter-evans/enable-pull-request-automerge@v3`
+- Vulnerabilidad esbuild low será auto-fixeada cuando upstream publique parche
+
+### Notes
+- Ya había 1 alerta de Dependabot desde el push inicial (esbuild path traversal en Windows). Esta config la formaliza y la arreglará automáticamente cuando esté disponible.
+
+Documented in `docs/TESTING.md` under "Dependabot (auto-update dependencies + security patches)"
+
 ## [1.4.0] - 2026-09-18
 
 ### Added

@@ -1,0 +1,51 @@
+name: Dependabot auto-merge
+
+# Auto-merge patch updates de Dependabot si pasan CI.
+# Minor updates también se mergean si pasan tests, pero major NO
+# (requieren revisión manual por riesgo de breaking changes).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge patch/minor updates
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for patch updates
+        # Patch (semver): bug fixes, no breaking changes. Safe to auto-merge
+        # if CI passes.
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.number }}
+          merge-method: squash
+          commit-message: auto
+
+      - name: Enable auto-merge for minor updates
+        # Minor (semver): new features, backwards-compatible. Mostly safe but
+        # requires manual review if release notes mention breaking config changes.
+        # We auto-merge y dejamos que CI sea el gate de seguridad.
+        if: steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ github.event.number }}
+          merge-method: squash
+          commit-message: auto
+
+      # Major updates (version-update:semver-major) NO se auto-mergean.
+      # Requieren revisión manual del changelog.
