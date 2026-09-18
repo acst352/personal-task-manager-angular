@@ -47,6 +47,10 @@ Thumbs.db
 /dist/bundle-report.html
 /dist/bundle-report.html.*
 
+# YAML validation artifacts (side-effect of pnpm dlx yaml2json on workflow files)
+/.github/*.json
+/.github/**/*.json
+
 # Agent / tooling local state
 .claude/
 
