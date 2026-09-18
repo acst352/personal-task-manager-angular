@@ -11,8 +11,10 @@
  * commit history), rotate it via the InsForge dashboard. RLS keeps your
  * data safe regardless of who has the key.
  *
- * If you want stricter hygiene (e.g. you have other secrets like a CI
- * deploy token), use the docs/environment-management.md guide.
+ * Deploy note: Vercel auto-detects this project as if it used Vite
+ * env vars (VITE_INSFORGE_BASE_URL, VITE_INSFORGE_ANON_KEY), but it
+ * does not — this is an Angular CLI project. Those auto-detected
+ * fields stay empty in Vercel. See docs/DEPLOYMENT.md for why.
  */
 export const environment = {
   production: false,
