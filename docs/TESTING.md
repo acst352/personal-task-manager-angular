@@ -317,19 +317,72 @@ pnpm prepush                    # correr manualmente sin hacer push
 
 ---
 
-## CI (futuro)
+## CI (GitHub Actions)
 
-Para integrar en CI:
+`.github/workflows/verify.yml` corre en push a main y en PRs.
 
-```yaml
-# .github/workflows/test.yml (ejemplo, NO creado aún)
-- run: pnpm install --frozen-lockfile
-- run: pnpm e2e:install
-- run: pnpm test
-- run: pnpm e2e
+### Qué corre
+
+| Step | Comando | Tiempo aprox | Cacheable |
+|---|---|---|---|
+| Install deps | `pnpm install --frozen-lockfile` | 30-60s | Sí (npm store) |
+| Install Playwright | `playwright install --with-deps chromium` | 60-90s primera vez, 0s cache hit | Sí (browser cache) |
+| Lint | `pnpm lint` | 20s | No |
+| Unit + coverage | `pnpm test:coverage` | 30-60s | No |
+| Build | `pnpm build` | 30s | No |
+| E2E | `pnpm e2e` | 2-4 min | No |
+
+Total: ~5-7 min primera vez, ~3-4 min con caches.
+
+### CI-aware config
+
+`playwright.config.ts` ya adapta comportamiento a `CI=true`:
+
+```ts
+retries: process.env['CI'] ? 2 : 0,
+workers: process.env['CI'] ? 1 : undefined,
+reporter: process.env['CI'] ? [['html'], ['list']] : 'list',
+webServer: { reuseExistingServer: !process.env['CI'] }
 ```
 
-Los secrets de InsForge se pasan como variables de entorno. Los tests E2E deben apuntar a un proyecto de test separado (no el de dev).
+Esto significa que en CI: 1 worker secuencial, 2 retries por test, HTML report, y siempre arranca webServer fresco.
+
+### Secrets
+
+**No se requieren secrets en CI.** El `anonKey` de InsForge es público (mismo modelo que Supabase — `publishable`, no `secret`), está en `src/environments/environment.ts` y se pushea al repo. La seguridad real está en las RLS policies del backend.
+
+Si en el futuro quieres aislar e2e del proyecto de dev:
+1. Crear proyecto InsForge separado para CI
+2. Apuntar `environment.ts` a una URL distinta en builds CI (override con file replacement)
+3. Agregar secret `INFORGE_BASE_URL` en GitHub repo settings
+
+Por ahora, CI usa el mismo proyecto InsForge que dev. Riesgo aceptable porque:
+- anonKey es público
+- RLS policies limitan acceso por usuario
+- Tests crean/limpian sus propios datos
+
+### Artifacts subidos
+
+| Artifact | Cuando | Retention |
+|---|---|---|
+| `coverage-report` (HTML) | Siempre | 14 días |
+| `playwright-report` | Solo en failure | 7 días |
+
+Se descargan desde el summary del run en la tab "Actions".
+
+### Concurrency
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+Si haces push nuevo a la misma branch mientras un CI está corriendo, el viejo se cancela. Ahorra GitHub Actions minutes.
+
+### Estado
+
+✅ Implementado y pusheado.
 
 ---
 

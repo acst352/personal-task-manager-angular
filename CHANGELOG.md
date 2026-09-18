@@ -4,6 +4,19 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-09-18
+
+### Added
+- **GitHub Actions CI workflow** (`.github/workflows/verify.yml`):
+  - Runs on push to main and PRs
+  - Steps: install → lint → unit+coverage → build → e2e
+  - Caches: pnpm store (via setup-node) + Playwright browsers
+  - Concurrency: cancels in-progress runs on new push to same branch
+  - Artifacts: coverage report (14d), playwright report on failure (7d)
+  - No secrets required (anonKey is public, RLS is security boundary)
+  - Timeout: 20 min
+- Documented in `docs/TESTING.md` under "CI (GitHub Actions)"
+
 ## [1.1.1] - 2026-09-18
 
 ### Added
