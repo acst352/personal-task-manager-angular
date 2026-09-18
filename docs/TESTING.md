@@ -464,6 +464,84 @@ Solo usar en emergencias (e.g. el hook está roto). NO usar para saltarse las re
 ```bash
 pnpm lint:commits:all          # últimos 50 commits
 pnpm exec commitlint --from=v1.0.0 --to=HEAD   # rango custom
+
+---
+
+## Bundle analyzer y size budget
+
+### Size budget (enforcement automático en CI)
+
+`angular.json` tiene budgets que `pnpm build` (corriendo en CI) verifica:
+
+```json
+"budgets": [
+  {
+    "type": "initial",
+    "maximumWarning": "350kB",
+    "maximumError": "500kB"
+  },
+  {
+    "type": "anyComponentStyle",
+    "maximumWarning": "4kB",
+    "maximumError": "8kB"
+  }
+]
+```
+
+| Tipo | Warn | Error |
+|---|---|---|
+| Initial bundle | 350 KB | 500 KB |
+| Cualquier component style | 4 KB | 8 KB |
+
+Si el bundle excede el warning, el build muestra warning. Si excede el error, **falla**. Como CI corre `pnpm build`, las regresiones de tamaño se cazan automáticamente.
+
+**Estado actual (v1.4.0)**: 299 KB initial / 48 bytes styles. 51 KB de buffer al warning.
+
+### Bundle analyzer (visual, local)
+
+`source-map-explorer` (v2.5.3) genera un treemap interactivo del bundle.
+
+```bash
+pnpm build:analyze
+# → genera dist/bundle-report.html
+# → abrir en browser para ver breakdown por paquete
+```
+
+Output incluye:
+- Treemap con tamaño proporcional de cada módulo
+- Tabla con `% size` y `gzip size` por archivo
+- `--no-border-checks` desactiva validación estricta de source maps
+- `--gzip` muestra tamaño transferido (compressed)
+
+### Producción con source maps
+
+`source-map-explorer` necesita source maps en producción. El config de Angular los activa:
+
+```json
+"production": {
+  "sourceMap": true,
+  ...
+}
+```
+
+Esto añade ~0.5 KB al bundle final. Tradeoff aceptable para OSS project (en producción cerrada, source maps exponen código fuente — desactivarlos).
+
+### Cuando preocuparse
+
+| Bundle size | Acción |
+|---|---|
+| `< 350 KB` | Normal |
+| `350-500 KB` | Investigar qué agregó peso, refactor posible |
+| `> 500 KB` | CI falla — fix obligatorio antes de merge |
+| Incremento `> 10%` entre releases | Investigar dependency bloat |
+
+### Identificar qué infla el bundle
+
+```bash
+pnpm build:analyze
+# abrir dist/bundle-report.html en browser
+# buscar módulos grandes (ng/* packages, dependencies de terceros)
+```
 ```
 
 ---

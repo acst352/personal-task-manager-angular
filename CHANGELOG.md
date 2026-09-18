@@ -4,6 +4,33 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-18
+
+### Added
+- **Bundle analyzer** (`source-map-explorer` v2.5.3):
+  - `pnpm build:analyze` genera `dist/bundle-report.html` con treemap interactivo
+  - Output incluye tamaño raw + gzip size por módulo
+  - `--no-border-checks --gzip` flags para analysis headless-friendly
+- **Size budget enforcement** (en `angular.json`):
+  - `initial`: warn 350 KB / error 500 KB
+  - `anyComponentStyle`: warn 4 KB / error 8 KB
+  - CI ya enforce via `pnpm build` step en `.github/workflows/verify.yml`
+- **Source maps en producción** (`sourceMap: true` en `production` config):
+  - Necesario para source-map-explorer
+  - Costo: ~0.5 KB adicionales en bundle (acceptable para OSS)
+- **packageManager fix**: `angular.json` ahora dice `"pnpm"` en lugar de `"npm"`
+
+### Changed
+- Bundle budgets tightened: initial 500/1000 → 350/500 (más alineado con el bundle actual de 299 KB)
+
+### Current bundle state
+- Initial: 299.37 KB raw / 78.57 KB transferred
+- Styles: 48 bytes
+- Buffer al warning: 51 KB (17%)
+- Buffer al error: 201 KB
+
+Documented in `docs/TESTING.md` under "Bundle analyzer y size budget"
+
 ## [1.3.0] - 2026-09-18
 
 ### Added
