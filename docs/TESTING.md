@@ -374,11 +374,27 @@ Se descargan desde el summary del run en la tab "Actions".
 
 ```yaml
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
   cancel-in-progress: true
 ```
 
 Si haces push nuevo a la misma branch mientras un CI está corriendo, el viejo se cancela. Ahorra GitHub Actions minutes.
+
+**Importante**: el grupo incluye `${{ github.actor }}`. Esto evita que pushes de **diferentes actores** se cancelen entre sí.
+
+| Escenario | Comportamiento | Por qué |
+|---|---|---|
+| Dev push rápido (3 commits en 10s) | El segundo cancela al primero | Mismo actor + mismo ref → mismo grupo |
+| Dev push, luego Dependabot auto-mergea 3 PRs | **Ambos corren en paralelo, ninguno cancela al otro** | Distinto actor → distinto grupo |
+| Dependabot mergea 3 PRs en rápida sucesión | El segundo cancela al primero | Mismo actor (`dependabot[bot]`) → mismo grupo |
+
+**Por qué importa**: sin el `${{ github.actor }}`, el grupo era solo `verify-main`. Cuando Dependabot mergeaba PRs a main, cada merge disparaba verify-main, cancelando cualquier verify-main del developer en progreso. Esto causaba checks "cancelled" en commits del developer (visible como "1/2 checks passed") aunque el estado final estuviera validado.
+
+Con `${{ github.actor }}`, los grupos son:
+- `verify-main-acst352` (developer)
+- `verify-main-dependabot[bot]`
+
+Son grupos distintos, runs independientes. Solo se cancelan runs del mismo actor.
 
 ### Estado
 

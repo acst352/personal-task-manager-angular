@@ -4,6 +4,21 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-09-18
+
+### Fixed
+- **CI concurrency cancel race condition**: el grupo de concurrencia de `verify.yml` era solo `${{ github.workflow }}-${{ github.ref }}`. Cuando Dependabot auto-mergeaba PRs a main, cada merge disparaba `verify-main`, cancelando cualquier verify del developer en progreso (visible como "1/2 checks passed" en commits recientes, e.g. `bc2058f`).
+
+  **Fix**: añadido `${{ github.actor }}` al grupo. Ahora:
+  - `verify-main-acst352` (developer)
+  - `verify-main-dependabot[bot]`
+
+  Son grupos distintos → cero cancelaciones cruzadas. Runs del mismo actor sí se cancelan entre sí (ahorra minutos).
+
+  No es grave porque el estado final de main siempre quedaba validado (los merges de Dependabot triggeaban runs propios que sí pasaban). Pero era frágil: si Dependabot estaba quieto, futuros commits del developer podían quedarse sin validar si otra cosa los cancelaba primero.
+
+Documented in `docs/TESTING.md` under "CI > Concurrency"
+
 ## [1.5.0] - 2026-09-18
 
 ### Added

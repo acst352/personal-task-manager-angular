@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [main]
 
-# Cancel runs en progreso cuando llega un push nuevo al mismo branch/PR
+# Cancelar runs en progreso cuando llega un push nuevo del mismo actor
+# al mismo branch. Añadir github.actor al grupo evita que pushes de
+# Dependabot (que se mergean via auto-merge) cancelen runs en progreso
+# de developers, y viceversa.
+# Ver: docs/TESTING.md "CI > Concurrency"
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.actor }}
   cancel-in-progress: true
 
 env:
