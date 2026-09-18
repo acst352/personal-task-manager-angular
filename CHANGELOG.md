@@ -4,6 +4,26 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+### Added
+- **Linear project for executive visibility** (`Administrador de tareas personales`):
+  - Mirror project alongside the existing granular `Angular CRUD` project in Linear workspace
+  - 3 epic-level issues (App funcional / Suite de calidad / Seguridad y mantenimiento) all Done + 1 project status update
+  - Comparing doc: `docs/team-demo/linear-hygiene.md` covering granular vs executive views
+- **Vercel deployment configuration** (`vercel.json`):
+  - `outputDirectory: dist/task-manager/browser` (Angular 17+ default)
+  - `pnpm build` + `pnpm install --frozen-lockfile` matching CI
+  - SPA rewrites `/(.*)` → `/index.html` so `/login`, `/tasks` don't 404 on hard reload
+  - 1-year immutable `Cache-Control` for `/assets/*` (safe thanks to content hashing)
+- **Deployment documentation** (`docs/DEPLOYMENT.md`):
+  - Explains Vercel auto-detected `VITE_INSFORGE_*` env vars (false positive for Angular projects — `import.meta.env` is Vite-specific)
+  - Why the anonKey in `environment.ts` is publishable by design (RLS is the real security boundary)
+  - Migration path to true env vars if ever needed
+
+### Notes
+- No version bump required — all entries are documentation-only.
+- The 3 commits are: `e24bc5` (Linear hygiene doc), `b9fb5c3` (vercel.json), `d47195e` (Vercel deployment docs).
+- Functional state of the project remains **v1.8.0** (`8fa1355`).
+
 ## [1.8.0] - 2026-09-18
 
 ### Added
