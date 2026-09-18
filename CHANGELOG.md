@@ -4,6 +4,19 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-18
+
+### Added
+- **Commitlint** (Conventional Commits enforcement):
+  - `commitlint.config.js` extends `@commitlint/config-conventional` v21
+  - `.husky/commit-msg` runs `commitlint --edit` on every commit
+  - Rules: type-enum (standard set), header-max-length 120, body-max-line-length 200
+  - `subject-case` disabled — names like ESLint, GitHub, InsForge break lower/sentence-case
+  - New scripts: `pnpm commitlint`, `pnpm lint:commit`, `pnpm lint:commits:all`
+  - 10/10 historical commits validated retroactively
+- Documented in `docs/TESTING.md` under "Convenciones de commits (commitlint)"
+- Dependencies: `@commitlint/cli@21.2.2`, `@commitlint/config-conventional@21.2.2`
+
 ## [1.2.0] - 2026-09-18
 
 ### Added

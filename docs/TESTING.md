@@ -386,6 +386,88 @@ Si haces push nuevo a la misma branch mientras un CI está corriendo, el viejo s
 
 ---
 
+## Convenciones de commits (commitlint)
+
+`.husky/commit-msg` corre commitlint sobre cada commit antes de aceptarlo.
+
+### Reglas activas
+
+Config en `commitlint.config.js`, extiende `@commitlint/config-conventional`. Reglas custom:
+
+| Rule | Valor | Por qué |
+|---|---|---|
+| `subject-case` | `[0]` (off) | Nombres propios rompen lower/sentence case (ESLint, GitHub, InsForge) |
+| `header-max-length` | 120 | Commits con scope + descripción detallada (no entran en 100) |
+| `body-max-line-length` | 200 | Permite listas largas en el body |
+
+Reglas activas del config-conventional default:
+- `type-enum`: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert
+- `type-empty`, `subject-empty`: catches missing parts
+- `header-trim`: no whitespace at start/end
+- `scope-case`: scope must be lower-case
+
+### Formato
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+| Type | Cuándo |
+|---|---|
+| `feat` | Nueva feature para el usuario |
+| `fix` | Bug fix |
+| `docs` | Solo documentación |
+| `style` | Formatting, no code change |
+| `refactor` | Code change que no es feat ni fix |
+| `test` | Solo tests |
+| `chore` | Tooling, deps, configuración |
+| `build` | Build system |
+| `ci` | CI configuration |
+| `perf` | Performance improvement |
+| `revert` | Revert de commit previo |
+
+**Breaking change**: añadir `!` después de type/scope (`feat!:`) o footer `BREAKING CHANGE: description`.
+
+### Ejemplos buenos
+
+```
+feat(tasks): add due date filter to task list
+fix(auth): prevent stale httpResource on user switch
+docs(testing): document pre-push guard
+chore: bump @angular/core to 21.2
+ci(workflow): add coverage artifact upload
+```
+
+### Ejemplos malos (serán rechazados)
+
+```
+added stuff             # sin type
+wip: foo               # type inválido
+feat:                  # subject vacío
+feat: this is a really long subject that exceeds one hundred and twenty characters...
+```
+
+### Bypass (emergencias)
+
+```bash
+git commit --no-verify -m "..."
+```
+
+Solo usar en emergencias (e.g. el hook está roto). NO usar para saltarse las reglas.
+
+### Validar commits existentes
+
+```bash
+pnpm lint:commits:all          # últimos 50 commits
+pnpm exec commitlint --from=v1.0.0 --to=HEAD   # rango custom
+```
+
+---
+
 ## Referencias
 
 - [vitest docs](https://vitest.dev/)
