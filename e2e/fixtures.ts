@@ -1,10 +1,27 @@
 import { test as base, expect, type Page, type APIRequestContext } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 import { environment } from '../src/environments/environment';
 
 const ADMIN_HEADERS = {
   Authorization: `Bearer ${environment.insforge.anonKey}`,
   apikey: environment.insforge.anonKey,
 };
+
+/**
+ * Generates a unique email for test users.
+ *
+ * Why randomUUID instead of Date.now():
+ * - Date.now() can collide if two beforeAll blocks run in the same millisecond
+ *   (rare but observed with parallel workers)
+ * - randomUUID is cryptographically unique — guarantees no cross-file collisions
+ *   regardless of timing, parallelism, or test reruns
+ *
+ * The @example.com TLD is a reserved domain (RFC 2606) that won't collide with
+ * real users on the InsForge instance.
+ */
+export function uniqueEmail(prefix: string): string {
+  return `${prefix}-${randomUUID()}@example.com`;
+}
 
 type Fixtures = {
   cleanDb: void;

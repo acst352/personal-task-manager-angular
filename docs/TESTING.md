@@ -247,6 +247,47 @@ Los tests E2E comparten el mismo backend. Si un test crea tasks para un usuario 
 
 Tests en el mismo describe comparten usuario (definido en beforeAll). Las tasks se acumulan. **Mitigación**: para tests sensibles al orden, usar `cleanupTasks` en `beforeEach`.
 
+### Test isolation strategy (v1.6.0)
+
+Tres mecanismos combinados para hacer la suite deterministic:
+
+#### 1. UUIDs para emails únicos (`uniqueEmail()` helper en `fixtures.ts`)
+
+```ts
+import { uniqueEmail } from './fixtures';
+const userEmail = uniqueEmail('switch-a'); // → switch-a-{uuid}@example.com
+```
+
+Reemplaza el antiguo `Date.now()`. UUIDs son criptográficamente únicos — sin colisión cross-file, cross-run, o con paralelismo.
+
+#### 2. Workers seriales (`playwright.config.ts`)
+
+```ts
+fullyParallel: false,
+workers: 1,
+```
+
+Sin paralelismo, no hay race conditions en el backend compartido de InsForge. Costo: ~3 min serial vs ~1 min paralelo. Aceptable para 16 tests.
+
+#### 3. Cleanup entre tests (`beforeEach: cleanupTasks` en `tasks.spec.ts`)
+
+Sin esto, TASK-E2E-4 fallaba porque `.first()` borraba el primer task de la lista, no el específico "to delete". Ahora cada test arranca con DB limpia para el usuario.
+
+#### 4. Locators específicos en vez de `.first()`
+
+Tests que interactúan con un task específico usan `page.locator('li:has-text("...")')` en vez de `.first()`. Robusto contra cualquier número de tasks en la lista.
+
+### Resultado
+
+| | Antes (v1.4.0) | Después (v1.6.0) |
+|---|---|---|
+| Tests pasando en suite | 14/16 | 16/16 |
+| Tests flaky | 2 (auth-switch, TASK-E2E-4) | 0 |
+| Tiempo total | ~30s | ~35s (serial + cleanup per-test) |
+| Determinístico en reruns | ❌ | ✅ |
+
+Ambos runs idénticos (16/16 en 34s), confirmado deterministic.
+
 ### HttpTestingController + httpResource
 
 `httpResource` usa HttpClient internamente. HttpTestingController intercepta. Pero el ciclo de vida es perezoso — primer `value()` access dispara el fetch.

@@ -5,10 +5,14 @@ const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  // Tests en serie (workers=1) para evitar race conditions en el backend
+  // compartido de InsForge. fullyParallel=false garantiza serial incluso
+  // dentro del mismo archivo.
+  // Costo: ~3 min serial vs ~1 min paralelo. Aceptable para una suite de 16 tests.
+  fullyParallel: false,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
-  workers: process.env['CI'] ? 1 : undefined,
+  workers: 1,
   reporter: process.env['CI'] ? [['html'], ['list']] : 'list',
   timeout: 30_000,
   expect: {

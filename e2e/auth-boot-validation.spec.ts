@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { signIn, createTestUser, deleteUser, cleanupTasks } from './fixtures';
+import { signIn, createTestUser, deleteUser, cleanupTasks, uniqueEmail } from './fixtures';
 
 test.describe('auth-boot-validation — stale token rejected at boot', () => {
-  const email = `boot-${Date.now()}@example.com`;
+  const email = uniqueEmail('boot');
   const password = 'TestPassword123';
   let userId: string;
 

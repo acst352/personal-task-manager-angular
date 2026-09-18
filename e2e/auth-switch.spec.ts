@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { signIn, createTestUser, deleteUser, cleanupTasks, createTaskViaUI } from './fixtures';
+import {
+  signIn,
+  createTestUser,
+  deleteUser,
+  cleanupTasks,
+  createTaskViaUI,
+  uniqueEmail,
+} from './fixtures';
 
 test.describe('auth-switch — bug #3 regression (stale httpResource on user change)', () => {
-  const userAEmail = `switch-a-${Date.now()}@example.com`;
-  const userBEmail = `switch-b-${Date.now()}@example.com`;
+  const userAEmail = uniqueEmail('switch-a');
+  const userBEmail = uniqueEmail('switch-b');
   const password = 'TestPassword123';
   let userAId: string;
   let userBId: string;

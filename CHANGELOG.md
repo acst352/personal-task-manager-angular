@@ -4,6 +4,27 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-18
+
+### Fixed
+- **E2E test pollution (auth-switch, TASK-E2E-4)** — these tests passed in isolation but failed in full suite due to shared backend state.
+
+### Added
+- **`uniqueEmail(prefix)` helper** in `e2e/fixtures.ts`: generates `{prefix}-{uuid}@example.com` using `crypto.randomUUID()`. Replaces `Date.now()` which could collide if two `beforeAll` blocks ran in the same millisecond.
+- **`workers: 1` always** in `playwright.config.ts` (not just CI): serializes tests to eliminate race conditions on shared InsForge backend. `fullyParallel: false` ensures tests within a file also run serially.
+- **`cleanupTasks` in `beforeEach`** for `tasks.spec.ts`: each test starts with clean DB for the user.
+- **Specific locators in TASK-E2E-2, -3, -4, -6**: `page.locator('li:has-text("...")')` instead of `.first()` to target tasks by title rather than position.
+
+### Result
+- **16/16 e2e tests passing** in full suite (was 14/16)
+- Deterministic across reruns (verified 2x consecutive runs, identical results)
+- 0 flaky tests
+
+### Tradeoff
+- E2E runtime ~34s serial (was ~30s with some parallelism). Acceptable for 16 tests.
+
+Documented in `docs/TESTING.md` under "Test isolation strategy (v1.6.0)"
+
 ## [1.5.1] - 2026-09-18
 
 ### Fixed

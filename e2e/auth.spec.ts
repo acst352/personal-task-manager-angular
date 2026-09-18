@@ -1,8 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { signIn, createTestUser, deleteUser, cleanupTasks, createTaskViaUI } from './fixtures';
+import {
+  signIn,
+  createTestUser,
+  deleteUser,
+  cleanupTasks,
+  createTaskViaUI,
+  uniqueEmail,
+} from './fixtures';
 
 test.describe('auth — login + logout flows', () => {
-  const userEmail = `auth-test-${Date.now()}@example.com`;
+  const userEmail = uniqueEmail('auth-test');
   const userPassword = 'TestPassword123';
   let userId: string;
 

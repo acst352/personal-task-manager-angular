@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { cleanupTasks } from './fixtures';
+import { cleanupTasks, uniqueEmail } from './fixtures';
 
 test.describe('signup — regression tests', () => {
   test('signup from a fresh browser session logs in without 401 errors', async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('signup — regression tests', () => {
 
     // Switch to signup
     await page.locator('button:has-text("Crear cuenta")').click();
-    const email = `signup-${Date.now()}@example.com`;
+    const email = uniqueEmail('signup');
     await page.locator('input[name="email"]').fill(email);
     await page.locator('input[name="password"]').fill('TestPassword123');
 
