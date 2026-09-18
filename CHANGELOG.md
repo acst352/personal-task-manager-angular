@@ -4,6 +4,15 @@ Todos los cambios notables de este proyecto se documentan aquí. El formato sigu
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-09-18
+
+### Added
+- **Pre-push guard** (`.husky/pre-push` + `scripts/prepush-check.sh`):
+  Runs `git add --dry-run .` before every `git push`. Blocks if >50 paths would stage, warns if 5-50, silent if ≤5. Catches the regression where `.gitignore` was truncated and would have pushed `node_modules/` to a public repo.
+- Documented in `docs/TESTING.md` under "Pre-push guard"
+- New script: `pnpm prepush` (manual run)
+- Override: `PREPUSH_THRESHOLD=N git push`
+
 ## [1.1.0] - 2026-09-18
 
 ### Added

@@ -279,6 +279,44 @@ Si encuentras un bug en producción, escribe primero el test que lo caza, luego 
 
 ---
 
+## Pre-push guard (catches `.gitignore` regressions)
+
+`.husky/pre-push` runs `scripts/prepush-check.sh` antes de cada `git push`. El script verifica:
+
+```bash
+git add --dry-run . | wc -l
+```
+
+| Resultado | Acción |
+|---|---|
+| `> 50` | **Push bloqueado**. Imprime los primeros 20 paths que se stagearían. Probable `.gitignore` roto |
+| `5-50` | Warning con lista. Tú decides si continuar |
+| `≤ 5` | Silent OK (estado normal con cambios tracked pequeños) |
+
+**Por qué importa**: VS Code muestra "10K cambios" cuando `node_modules/` tiene 77K archivos. `git status` solo muestra ~5 directorios. **Ninguno de los dos te dice si `.gitignore` funciona**. La única verificación fiable es `git add --dry-run .`.
+
+Este hook existe porque un bug previo sobrescribió `.gitignore` a 13 líneas (perdió las reglas default de Angular CLI), lo que habría stageado 11,047 paths incluyendo `node_modules`. Sin este hook, ese bug habría llegado al `git push origin main` del repo público.
+
+### Override para pushes grandes intencionales
+
+```bash
+PREPUSH_THRESHOLD=200 git push   # permite hasta 200 paths
+pnpm prepush                    # correr manualmente sin hacer push
+```
+
+### Por qué el umbral es 50
+
+| Estado | Paths esperados |
+|---|---|
+| `.gitignore` funcionando bien | 0-5 (solo cambios tracked) |
+| `.gitignore` roto | Miles |
+| Batch commit legítimo (feature nuevo con muchos archivos) | 10-40 |
+| `.gitignore` + batch legítimo | 10-40 |
+
+50 deja espacio para batch commits legítimos sin generar falsos positivos.
+
+---
+
 ## CI (futuro)
 
 Para integrar en CI:

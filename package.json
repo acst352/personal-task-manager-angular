@@ -17,7 +17,8 @@
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.{ts,html,css,json,md}\" \"docs/**/*.md\" \"e2e/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css,json,md}\" \"docs/**/*.md\" \"e2e/**/*.ts\"",
-    "verify": "pnpm lint && pnpm test:coverage && pnpm e2e && pnpm build"
+    "verify": "pnpm lint && pnpm test:coverage && pnpm e2e && pnpm build",
+    "prepush": "bash scripts/prepush-check.sh"
   },
   "private": true,
   "dependencies": {
