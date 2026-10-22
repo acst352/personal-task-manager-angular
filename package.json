@@ -45,7 +45,7 @@
     "@angular-eslint/eslint-plugin": "^22.6.0",
     "@angular-eslint/eslint-plugin-template": "^22.6.0",
     "@angular/build": "^21.2.27",
-    "@angular/cli": "^21.2.27",
+    "@angular/cli": "^21.2.28",
     "@angular/compiler-cli": "^21.2.25",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.2",
